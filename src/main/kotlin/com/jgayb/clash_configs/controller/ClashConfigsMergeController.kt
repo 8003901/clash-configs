@@ -8,6 +8,7 @@ import com.jgayb.clash_configs.eneity.ClashConfig
 import com.jgayb.clash_configs.eneity.ClashConfigsMerge
 import com.jgayb.clash_configs.service.ClashConfigsMergeService
 import jakarta.validation.constraints.NotBlank
+import org.springframework.beans.BeanUtils
 import org.springframework.http.HttpStatus
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -16,7 +17,7 @@ import org.springframework.web.server.ResponseStatusException
 @RestController
 @RequestMapping("/clash_configs_merge")
 class ClashConfigsMergeController(
-    val clashConfigsMergeService: ClashConfigsMergeService
+    private val clashConfigsMergeService: ClashConfigsMergeService
 ) {
     @PostMapping
     fun create(@RequestBody @Validated clashConfigsMergeAdd: ClashConfigsMergeAdd): ClashConfigsMerge {
@@ -25,23 +26,24 @@ class ClashConfigsMergeController(
 
     @PutMapping
     fun update(@Validated @RequestBody clashConfigsMergeUpdate: ClashConfigsMergeUpdate): ClashConfigsMerge {
-        return ClashConfigsMerge()
+        val ccm = ClashConfigsMerge()
+        BeanUtils.copyProperties(clashConfigsMergeUpdate, ccm)
+        return clashConfigsMergeService.save(ccm)
     }
 
     @PutMapping("/{id}/token")
     fun refreshToken(@PathVariable id: String): ClashConfigsMerge {
         return clashConfigsMergeService.refreshToken(id)
     }
-
-
 }
 
 @RestController
 @RequestMapping("/configs")
-class Config(
-    private val clashConfigsMergeService: ClashConfigsMergeService, private val objectMapper: ObjectMapper
+class ConfigController(
+    private val clashConfigsMergeService: ClashConfigsMergeService,
+    private val objectMapper: ObjectMapper
 ) {
-    private var yamlMapper: YAMLMapper = YAMLMapper()
+    private val yamlMapper = YAMLMapper()
 
     @GetMapping(produces = ["text/plain"])
     fun query(@RequestParam token: String): String {
@@ -49,53 +51,64 @@ class Config(
             HttpStatus.NOT_FOUND,
             "Config from token [$token] not found"
         )
+        return processConfig(configsMerge)
+    }
+
+    private fun processConfig(configsMerge: ClashConfigsMerge): String {
         val tempNode = objectMapper.readTree(configsMerge.config)
         val proxies = tempNode.get("proxies") as ArrayNode
-        val pxArrayNode = objectMapper.createArrayNode()
-        configsMerge.configs?.filter {
-            it.content?.isNotEmpty() == true
-        }?.forEach {
-            val pn = yamlMapper.readTree(it.content).get("proxies")
-            if (pn?.isArray == true) {
-                proxies.addAll(pn as ArrayNode)
+        val proxyNames = objectMapper.createArrayNode()
+
+        configsMerge.configs
+            ?.filter { it.content?.isNotEmpty() == true }
+            ?.forEach { config ->
+                yamlMapper.readTree(config.content)
+                    .get("proxies")
+                    ?.takeIf { it.isArray }
+                    ?.let { proxies.addAll(it as ArrayNode) }
             }
+
+        proxies.mapNotNull { it["name"]?.asText() }
+            .forEach(proxyNames::add)
+
+        tempNode.get("proxy-groups").forEach { group ->
+            processProxyGroup(group as ObjectNode, proxyNames, proxies)
         }
-        proxies.map {
-            it["name"].asText()
-        }.forEach(pxArrayNode::add)
-        tempNode.get("proxy-groups").forEach {
-            val filterKey = it.get("filter-key").asText("")
-            val od = it as ObjectNode
-            if (filterKey == "all") {
-                val op = od.get("proxies")
-                if (op != null && op.isArray) {
-                    (op as ArrayNode).addAll(pxArrayNode)
-                } else {
-                    od.put("proxies", pxArrayNode)
-                }
-            } else if (filterKey.isNotEmpty()) {
-                val keys = filterKey.split("|")
-                val gpt = objectMapper.createArrayNode()
-                proxies.filter { p ->
-                    val n = p["name"].asText()
-                    keys.any { k ->
-                        n.contains(k)
-                    }
-                }.map { p ->
-                    p["name"].asText()
-                }.forEach(gpt::add)
-                val op = od.get("proxies")
-                if (op != null && op.isArray) {
-                    (op as ArrayNode).addAll(gpt)
-                } else {
-                    od.put("proxies", gpt)
-                }
-            }
-            od.remove("filter-key")
-        }
+
         return yamlMapper.writeValueAsString(tempNode).replaceFirst("---\n", "")
     }
 
+    private fun processProxyGroup(group: ObjectNode, proxyNames: ArrayNode, proxies: ArrayNode) {
+        val filterKey = group.get("filter-key")?.asText("") ?: ""
+
+        when {
+            filterKey == "all" -> updateProxies(group, proxyNames)
+            filterKey.isNotEmpty() -> {
+                val keys = filterKey.split("|")
+                val filteredProxies = objectMapper.createArrayNode()
+
+                proxies.filter { proxy ->
+                    val name = proxy["name"].asText()
+                    keys.any { key -> name.contains(key) }
+                }.forEach { proxy ->
+                    filteredProxies.add(proxy["name"].asText())
+                }
+
+                updateProxies(group, filteredProxies)
+            }
+        }
+
+        group.remove("filter-key")
+    }
+
+    private fun updateProxies(group: ObjectNode, newProxies: ArrayNode) {
+        val existingProxies = group.get("proxies")
+        if (existingProxies?.isArray == true) {
+            (existingProxies as ArrayNode).addAll(newProxies)
+        } else {
+            group.put("proxies", newProxies)
+        }
+    }
 }
 
 data class ClashConfigsMergeAdd(

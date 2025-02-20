@@ -47,7 +47,7 @@ open class ClashConfigsMergeServiceImpl(
     }
 
     override fun save(clashConfigsMerge: ClashConfigsMerge): ClashConfigsMerge {
-        var cids = clashConfigsMerge.configs?.map { c -> c.id }?.toList()
+        val cids = clashConfigsMerge.configs?.map { c -> c.id }?.toList()
         if (cids?.isNotEmpty() == true) {
             clashConfigsMerge.configs = clashConfigRepository.findAllById(cids)
         }
