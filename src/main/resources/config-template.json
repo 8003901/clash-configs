@@ -1,0 +1,366 @@
+{
+  "mode": "rule",
+  "redir-port": 7895,
+  "mixed-port": 7897,
+  "socks-port": 7898,
+  "port": 7899,
+  "allow-lan": true,
+  "log-level": "info",
+  "ipv6": false,
+  "external-controller": "127.0.0.1:9097",
+  "secret": "",
+  "unified-delay": true,
+  "tun": {
+    "stack": "gvisor",
+    "device": "Meta",
+    "auto-route": true,
+    "strict-route": false,
+    "auto-detect-interface": true,
+    "dns-hijack": [
+      "any:53"
+    ],
+    "mtu": 1500,
+    "enable": false
+  },
+  "dns": {
+    "enable": true,
+    "nameserver": [
+      "117.50.10.10",
+      "119.29.29.29",
+      "114.114.114.114",
+      "223.5.5.5",
+      "223.6.6.6"
+    ],
+    "default-nameserver": [
+      "223.5.5.5",
+      "119.29.29.29",
+      "114.114.114.114",
+      "[2402:4e00::]",
+      "[2400:3200::1]"
+    ],
+    "ipv6": false,
+    "enhanced-mode": "redir-host",
+    "fake-ip-range": "172.29.0.1/16"
+  },
+  "profile": {
+    "store-selected": true
+  },
+  "tcp-fast-open": true,
+  "global-client-fingerprint": "chrome",
+  "network-buffer": 10240,
+  "tcp-concurrent": true,
+  "external-controller-cors": {
+    "allow-private-network": true,
+    "allow-origins": [
+      "*"
+    ]
+  },
+  "bind-address": "*",
+  "proxies": [],
+  "proxy-groups": [
+    {
+      "name": "Main Node",
+      "type": "select",
+      "proxies": [
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点"
+      ],
+      "filter-key": "all"
+    },
+    {
+      "name": "Apple Services",
+      "type": "select",
+      "proxies": [
+        "Main Node",
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点",
+        "DIRECT"
+      ],
+      "filter-key": "all"
+    },
+    {
+      "name": "Google Services",
+      "type": "select",
+      "proxies": [
+        "Main Node",
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点",
+        "DIRECT"
+      ],
+      "filter-key": "all"
+    },
+    {
+      "name": "Blocked Domains",
+      "type": "select",
+      "proxies": [
+        "Main Node",
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点",
+        "DIRECT"
+      ],
+      "filter-key": "all"
+    },
+    {
+      "name": "CHN Mainland",
+      "type": "select",
+      "proxies": [
+        "Main Node",
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点",
+        "DIRECT"
+      ],
+      "filter-key": "all"
+    },
+    {
+      "name": "Talkatone",
+      "type": "select",
+      "proxies": [
+        "Main Node",
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点",
+        "DIRECT"
+      ],
+      "filter-key": "all"
+    },
+    {
+      "name": "Gemini",
+      "type": "select",
+      "proxies": [
+        "Main Node",
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点",
+        "DIRECT"
+      ],
+      "filter-key": "all"
+    },
+    {
+      "name": "Failover",
+      "type": "fallback",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 300,
+      "filter-key": "all"
+    },
+    {
+      "name": "LoadBalance",
+      "type": "load-balance",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 300,
+      "tolerance": 50,
+      "strategy": "round-robin",
+      "filter-key": "all"
+    },
+    {
+      "name": "LeastLatency",
+      "type": "url-test",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 300,
+      "tolerance": 50,
+      "filter-key": "all"
+    },
+    {
+      "name": "美国节点",
+      "type": "url-test",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 86400,
+      "filter-key": "US|美国|America|america|United States"
+    },
+    {
+      "name": "香港节点",
+      "type": "url-test",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 86400,
+      "filter-key": "HK|Hong|hong|香港|深港|沪港|京港|港"
+    },
+    {
+      "name": "日本节点",
+      "type": "url-test",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 86400,
+      "filter-key": "JP|Japan|japan|Tokyo|tokyo|日本|东京|大阪|京日|苏日|沪日|上日|川日|深日|广日"
+    },
+    {
+      "name": "台湾节点",
+      "type": "url-test",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 86400,
+      "filter-key": "TW|Taiwan|taiwan|台湾|台北|台中|新北|彰化"
+    },
+    {
+      "name": "新加坡节点",
+      "type": "url-test",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 86400,
+      "filter-key": "SG|Sing|sing|新加坡|狮城|沪新|京新|深新|杭新|广新"
+    },
+    {
+      "name": "韩国节点",
+      "type": "url-test",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 86400,
+      "filter-key": "KR|Korea|korea|KOR|韩国|首尔|韩|韓|春川"
+    }
+  ],
+  "rule-providers": {
+    "reject": {
+      "type": "http",
+      "behavior": "domain",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/reject.txt",
+      "path": "./ruleset/reject.yaml",
+      "interval": 86400
+    },
+    "icloud": {
+      "type": "http",
+      "behavior": "domain",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/icloud.txt",
+      "path": "./ruleset/icloud.yaml",
+      "interval": 86400
+    },
+    "apple": {
+      "type": "http",
+      "behavior": "domain",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/apple.txt",
+      "path": "./ruleset/apple.yaml",
+      "interval": 86400
+    },
+    "google": {
+      "type": "http",
+      "behavior": "domain",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/google.txt",
+      "path": "./ruleset/google.yaml",
+      "interval": 86400
+    },
+    "proxy": {
+      "type": "http",
+      "behavior": "domain",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/proxy.txt",
+      "path": "./ruleset/proxy.yaml",
+      "interval": 86400
+    },
+    "direct": {
+      "type": "http",
+      "behavior": "domain",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/direct.txt",
+      "path": "./ruleset/direct.yaml",
+      "interval": 86400
+    },
+    "cncidr": {
+      "type": "http",
+      "behavior": "ipcidr",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/cncidr.txt",
+      "path": "./ruleset/cncidr.yaml",
+      "interval": 86400
+    },
+    "lancidr": {
+      "type": "http",
+      "behavior": "ipcidr",
+      "url": "https://raw.v2raysocks.com/Loyalsoldier/clash-rules/release/lancidr.txt",
+      "path": "./ruleset/lancidr.yaml",
+      "interval": 86400
+    }
+  },
+  "rules": [
+    "DOMAIN-SUFFIX,ip-api.com,Talkatone",
+    "DOMAIN-SUFFIX,agkn.com,Talkatone",
+    "DOMAIN-SUFFIX,cohere.com,Talkatone",
+    "DOMAIN-SUFFIX,kochava.com,Talkatone",
+    "DOMAIN-SUFFIX,crashlytics.com,Talkatone",
+    "DOMAIN-SUFFIX,inmobi.com,Talkatone",
+    "DOMAIN-SUFFIX,mobilefuse.com,Talkatone",
+    "DOMAIN-SUFFIX,talkatone.com,Talkatone",
+    "DOMAIN-SUFFIX,vm.talkatone.com,Talkatone",
+    "DOMAIN-SUFFIX,tktn.at,Talkatone",
+    "DOMAIN-SUFFIX,tktn.be,Talkatone",
+    "DOMAIN-SUFFIX,gemini.google.com,Gemini",
+    "DOMAIN-SUFFIX,chat.google.com,Gemini",
+    "DOMAIN-SUFFIX,generativelanguage.googleapis.com,Gemini",
+    "DOMAIN,ai.google.dev,Gemini",
+    "DOMAIN,alkalimakersuite-pa.clients6.google.com,Gemini",
+    "DOMAIN,generativelanguage.googleapis.com,Gemini",
+    "DOMAIN,makersuite.google.com,Gemini",
+    "DOMAIN-KEYWORD,colab,Gemini",
+    "DOMAIN-KEYWORD,developerprofiles,Gemini",
+    "DOMAIN-KEYWORD,generativelanguage,Gemini",
+    "DOMAIN-SUFFIX,apis.google.com,Gemini",
+    "DOMAIN-SUFFIX,bard.google.com,Gemini",
+    "DOMAIN-SUFFIX,deepmind.com,Gemini",
+    "DOMAIN-SUFFIX,deepmind.google,Gemini",
+    "DOMAIN-SUFFIX,generativeai.google,Gemini",
+    "DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com,Gemini",
+    "DOMAIN-SUFFIX,speedtest.net,DIRECT",
+    "DOMAIN-SUFFIX,hk,香港节点",
+    "PROCESS-NAME,v2ray,DIRECT",
+    "PROCESS-NAME,Surge%203,DIRECT",
+    "PROCESS-NAME,ss-local,DIRECT",
+    "PROCESS-NAME,privoxy,DIRECT",
+    "PROCESS-NAME,trojan,DIRECT",
+    "PROCESS-NAME,trojan-go,DIRECT",
+    "PROCESS-NAME,naive,DIRECT",
+    "PROCESS-NAME,Thunder,DIRECT",
+    "PROCESS-NAME,DownloadService,DIRECT",
+    "PROCESS-NAME,qBittorrent,DIRECT",
+    "PROCESS-NAME,Transmission,DIRECT",
+    "PROCESS-NAME,fdm,DIRECT",
+    "PROCESS-NAME,aria2c,DIRECT",
+    "PROCESS-NAME,Folx,DIRECT",
+    "PROCESS-NAME,NetTransport,DIRECT",
+    "PROCESS-NAME,uTorrent,DIRECT",
+    "PROCESS-NAME,WebTorrent,DIRECT",
+    "RULE-SET,icloud,Apple Services",
+    "RULE-SET,apple,Apple Services",
+    "RULE-SET,google,Google Services",
+    "RULE-SET,proxy,Blocked Domains",
+    "RULE-SET,cncidr,CHN Mainland",
+    "RULE-SET,direct,DIRECT",
+    "RULE-SET,lancidr,DIRECT,no-resolve",
+    "MATCH,Main Node"
+  ]
+}
