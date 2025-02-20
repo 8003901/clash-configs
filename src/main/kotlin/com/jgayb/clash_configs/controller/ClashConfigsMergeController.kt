@@ -106,7 +106,7 @@ class ConfigController(
         if (existingProxies?.isArray == true) {
             (existingProxies as ArrayNode).addAll(newProxies)
         } else {
-            group.put("proxies", newProxies)
+            group.set<ArrayNode>("proxies", newProxies)
         }
     }
 }
