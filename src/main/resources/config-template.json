@@ -165,6 +165,24 @@
       "filter-key": "all"
     },
     {
+      "name": "Tiktok",
+      "type": "select",
+      "proxies": [
+        "Main Node",
+        "LoadBalance",
+        "LeastLatency",
+        "Failover",
+        "美国节点",
+        "香港节点",
+        "日本节点",
+        "台湾节点",
+        "新加坡节点",
+        "韩国节点",
+        "DIRECT"
+      ],
+      "filter-key": "all"
+    },
+    {
       "name": "Gemini",
       "type": "select",
       "proxies": [
@@ -308,6 +326,33 @@
     }
   },
   "rules": [
+    "DOMAIN,lf16-effectcdn.byteeffecttos-g.com,Tiktok",
+    "DOMAIN,lf16-pkgcdn.pitaya-clientai.com,Tiktok",
+    "DOMAIN,p16-tiktokcdn-com.akamaized.net,Tiktok",
+    "DOMAIN-SUFFIX,bytedapm.com,Tiktok",
+    "DOMAIN-SUFFIX,bytegecko-i18n.com,Tiktok",
+    "DOMAIN-SUFFIX,byteoversea.com,Tiktok",
+    "DOMAIN-SUFFIX,capcut.com,Tiktok",
+    "DOMAIN-SUFFIX,ibytedtos.com,Tiktok",
+    "DOMAIN-SUFFIX,ibyteimg.com,Tiktok",
+    "DOMAIN-SUFFIX,ipstatp.com,Tiktok",
+    "DOMAIN-SUFFIX,isnssdk.com,Tiktok",
+    "DOMAIN-SUFFIX,muscdn.com,Tiktok",
+    "DOMAIN-SUFFIX,musical.ly,Tiktok",
+    "DOMAIN-SUFFIX,sgpstatp.com,Tiktok",
+    "DOMAIN-SUFFIX,snssdk.com,Tiktok",
+    "DOMAIN-SUFFIX,tik-tokapi.com,Tiktok",
+    "DOMAIN-SUFFIX,tiktok.com,Tiktok",
+    "DOMAIN-SUFFIX,tiktokcdn-us.com,Tiktok",
+    "DOMAIN-SUFFIX,tiktokcdn.com,Tiktok",
+    "DOMAIN-SUFFIX,tiktokd.net,Tiktok",
+    "DOMAIN-SUFFIX,tiktokd.org,Tiktok",
+    "DOMAIN-SUFFIX,tiktokmusic.app,Tiktok",
+    "DOMAIN-SUFFIX,tiktokv.com,Tiktok",
+    "DOMAIN-SUFFIX,tiktokv.us,Tiktok",
+    "DOMAIN-SUFFIX,ttwebview.com,Tiktok",
+    "DOMAIN-KEYWORD,musical.ly,Tiktok",
+    "DOMAIN-KEYWORD,tiktok,Tiktok",
     "DOMAIN-SUFFIX,ip-api.com,Talkatone",
     "DOMAIN-SUFFIX,agkn.com,Talkatone",
     "DOMAIN-SUFFIX,cohere.com,Talkatone",
