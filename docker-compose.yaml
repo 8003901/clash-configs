@@ -1,0 +1,12 @@
+version: '3'
+services:
+  clash-configs:
+    image: clash-configs:0.0.1-SNAPSHOT
+    ports:
+      - 8080:8080
+    volumes:
+      - ./data:/workspace/data
+    container_name: clash-configs
+    restart: always
+    cpus: "1"
+    mem_limit: 128M
