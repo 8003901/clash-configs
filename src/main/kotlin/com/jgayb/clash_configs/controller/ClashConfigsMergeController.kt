@@ -85,10 +85,10 @@ class ConfigController(
                 )
             }
         if (dataUsage != null) {
-            httpServletResponse.addHeader("subscription-userinfo", "upload=${dataUsage.upload}")
-            httpServletResponse.addHeader("subscription-userinfo", "download=${dataUsage.download}")
-            httpServletResponse.addHeader("subscription-userinfo", "total=${dataUsage.total}")
-            httpServletResponse.addHeader("subscription-userinfo", "expire=${dataUsage.expire}")
+            httpServletResponse.addHeader(
+                "subscription-userinfo",
+                "upload=${dataUsage.upload}; download=${dataUsage.download}; total=${dataUsage.total}; expire=${dataUsage.expire}"
+            )
         }
         proxies.mapNotNull { it["name"]?.asText() }
             .forEach(proxyNames::add)
