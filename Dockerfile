@@ -3,12 +3,12 @@ FROM openjdk:17 AS builder
 WORKDIR /app
 # 复制项目源码到工作目录
 COPY . .
-
+RUN mkdir  /root/.gradle
 # 安装 findutils 以获得 xargs
 RUN microdnf install -y findutils
 
 # 使用 BuildKit 挂载缓存，挂载 Gradle 缓存目录，避免重复下载依赖
-RUN --mount=type=cache,target=/home/gradle/.gradle sh /app/gradlew build --no-daemon
+RUN --mount=type=cache,source=/root/.gradle,target=/root/.gradle sh /app/gradlew build --no-daemon
 
 # 阶段2：运行阶段，基于轻量级 OpenJDK17 运行时镜像
 FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/openjdk:17-slim
