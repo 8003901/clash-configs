@@ -71,11 +71,8 @@ class UserServiceImpl(
 
     @Transactional
     override fun changePwd(username: String, pwd: String, oldPwd: String) {
-        var it = userRepository.findByUsername(username)
-        if (it == null) {
-            throw UsernameNotFoundException(username)
-        }
-        if (!passwordEncoder.matches(passwordEncoder.encode(oldPwd), it.password)) {
+        val it = userRepository.findByUsername(username) ?: throw UsernameNotFoundException(username)
+        if (!passwordEncoder.matches(oldPwd, it.password)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "旧密码错误")
         }
         it.password = passwordEncoder.encode(pwd)
