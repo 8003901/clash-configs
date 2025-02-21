@@ -1,11 +1,11 @@
 # 阶段1：构建阶段，使用带JDK17的Gradle镜像
-FROM openjdk:17 AS builder
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/openjdk:17-jdk-alpine AS builder
 WORKDIR /app
 # 复制项目源码到工作目录
 COPY . .
 RUN mkdir  /root/.gradle
 # 安装 findutils 以获得 xargs
-RUN microdnf install -y findutils
+RUN apk update && apk add --no-cache findutils
 
 # 使用 BuildKit 挂载缓存，挂载 Gradle 缓存目录，避免重复下载依赖
 RUN --mount=type=cache,target=/root/.gradle sh /app/gradlew build --no-daemon
