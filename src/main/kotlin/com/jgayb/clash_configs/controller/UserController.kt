@@ -13,7 +13,7 @@ class UserController(val userService: UserService) {
     @PutMapping("/password")
     fun changePassword(@RequestBody passwordUpdate: PasswordUpdate) {
         val ud = SecurityContextHolder.getContext().authentication.principal as UserDetails
-        userService.changePwd(ud.username, passwordUpdate.oldPassword, passwordUpdate.newPassword)
+        userService.changePwd(ud.username, passwordUpdate.newPassword, passwordUpdate.oldPassword)
     }
 
 }
