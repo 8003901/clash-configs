@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 RUN mkdir  /root/.gradle
 
-RUN cat > change_mirror.sh \<\<EOF \
+RUN cat > change_mirror.sh <<EOF \
     #!/bin/sh \
     # 检查是否以 root 权限运行 \
     if [ "$(id -u)" -ne 0 ]; then \
@@ -26,7 +26,7 @@ RUN cat > change_mirror.sh \<\<EOF \
     fi \
     # 替换为国内源 \
     echo "正在更换为清华大学镜像源..." \
-    cat > "$REPO_FILE" \<\< EOL \
+    cat > "$REPO_FILE" << EOL \
     ${MIRROR_URL}/main \
     ${MIRROR_URL}/community \
     EOL \
