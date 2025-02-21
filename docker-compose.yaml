@@ -2,11 +2,18 @@ version: '3'
 services:
   clash-configs:
     image: clash-configs:0.0.1-SNAPSHOT
+    build:
+      context: ./libs
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: 'clash-configs-0.0.1-SNAPSHOT.jar'
     ports:
-      - 8080:8080
+      - "8780:8780"
     volumes:
       - ./data:/workspace/data
     container_name: clash-configs
     restart: always
+    environment:
+      JAVA_OPTS: '-Dfile.encoding=UTF-8 -Dserver.port=8780'
     cpus: "1"
     mem_limit: 128M
