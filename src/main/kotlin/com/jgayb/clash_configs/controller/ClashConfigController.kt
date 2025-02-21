@@ -6,6 +6,7 @@ import com.jgayb.clash_configs.service.ClashConfigService
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -30,7 +31,7 @@ class ClashConfigController(
         return clashConfigService.saveClashConfig(cc)
     }
 
-    @PostMapping
+    @GetMapping
     fun list(): List<ClashConfig> {
         return clashConfigService.allClashConfigs()
     }
