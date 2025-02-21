@@ -65,6 +65,8 @@ class ClashConfigServiceImpl(
                     it.name = clashConfig.name
                 }
                 it.enabled = clashConfig.enabled
+                it.url = clashConfig.url
+                it.subscriptionUserinfo = clashConfig.subscriptionUserinfo
                 it.content = clashConfig.content
                 it.updatedAt = Date()
                 clashConfigRepository.save(it)
