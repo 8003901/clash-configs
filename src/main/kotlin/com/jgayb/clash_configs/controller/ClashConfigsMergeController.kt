@@ -7,12 +7,14 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.jgayb.clash_configs.eneity.ClashConfig
 import com.jgayb.clash_configs.eneity.ClashConfigsMerge
 import com.jgayb.clash_configs.service.ClashConfigsMergeService
+import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.constraints.NotBlank
 import org.springframework.beans.BeanUtils
 import org.springframework.http.HttpStatus
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
+import kotlin.math.min
 
 @RestController
 @RequestMapping("/clash_configs_merge")
@@ -51,15 +53,15 @@ class ConfigController(
     private val yamlMapper = YAMLMapper()
 
     @GetMapping(produces = ["text/plain"])
-    fun query(@RequestParam token: String): String {
+    fun query(@RequestParam token: String, httpServletResponse: HttpServletResponse): String {
         val configsMerge = clashConfigsMergeService.findByToken(token) ?: throw ResponseStatusException(
             HttpStatus.NOT_FOUND,
             "Config from token [$token] not found"
         )
-        return processConfig(configsMerge)
+        return processConfig(configsMerge, httpServletResponse)
     }
 
-    private fun processConfig(configsMerge: ClashConfigsMerge): String {
+    private fun processConfig(configsMerge: ClashConfigsMerge, httpServletResponse: HttpServletResponse): String {
         val tempNode = objectMapper.readTree(configsMerge.config)
         val proxies = tempNode.get("proxies") as ArrayNode
         val proxyNames = objectMapper.createArrayNode()
@@ -73,6 +75,21 @@ class ConfigController(
                     ?.let { proxies.addAll(it as ArrayNode) }
             }
 
+        val dataUsage =
+            configsMerge.configs?.mapNotNull(ClashConfig::subscriptionUserinfo)?.map(this::parse)?.reduce { c1, c2 ->
+                DataUsage(
+                    upload = c1.upload + c2.upload,
+                    download = c1.download + c2.download,
+                    total = c1.total + c2.total,
+                    expire = min(c1.expire, c2.expire),
+                )
+            }
+        if (dataUsage != null) {
+            httpServletResponse.addHeader("subscription-userinfo", "${dataUsage.upload}")
+            httpServletResponse.addHeader("subscription-userinfo", "${dataUsage.download}")
+            httpServletResponse.addHeader("subscription-userinfo", "${dataUsage.total}")
+            httpServletResponse.addHeader("subscription-userinfo", "${dataUsage.expire}")
+        }
         proxies.mapNotNull { it["name"]?.asText() }
             .forEach(proxyNames::add)
 
@@ -81,6 +98,23 @@ class ConfigController(
         }
 
         return yamlMapper.writeValueAsString(tempNode).replaceFirst("---\n", "")
+    }
+
+    private fun parse(data: String): DataUsage {
+        val infos = data.split(";")
+        val upload = infos.map(String::trim).find {
+            it.startsWith("upload")
+        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        val download = infos.map(String::trim).find {
+            it.startsWith("download")
+        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        val total = infos.map(String::trim).find {
+            it.startsWith("total")
+        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        val expire = infos.map(String::trim).find {
+            it.startsWith("expire")
+        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        return DataUsage(upload = upload, download = download, total = total, expire = expire)
     }
 
     private fun processProxyGroup(group: ObjectNode, proxyNames: ArrayNode, proxies: ArrayNode) {
@@ -115,6 +149,8 @@ class ConfigController(
         }
     }
 }
+
+data class DataUsage(val upload: Long, val download: Long, val total: Long, val expire: Long)
 
 data class ClashConfigsMergeAdd(
     @NotBlank var name: String, var configIds: MutableList<String>? = null
