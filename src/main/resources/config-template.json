@@ -132,6 +132,7 @@
       "name": "CHN Mainland",
       "type": "select",
       "proxies": [
+        "DIRECT",
         "Main Node",
         "LoadBalance",
         "LeastLatency",
@@ -141,8 +142,7 @@
         "日本节点",
         "台湾节点",
         "新加坡节点",
-        "韩国节点",
-        "DIRECT"
+        "韩国节点"
       ],
       "filter-key": "all"
     },
