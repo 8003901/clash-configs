@@ -7,6 +7,7 @@ import com.jgayb.clash_configs.service.ClashConfigService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanUtils
+import org.springframework.data.domain.Example
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -45,11 +46,13 @@ class ClashConfigServiceImpl(
         headers.add("User-Agent", "clash-verge/*")
         // 创建 HttpEntity，包含请求头
         val entity = HttpEntity<String>(headers)
-        restTemplate.exchange(
+        val responseEntity = restTemplate.exchange(
             clashConfig.url!!, HttpMethod.GET,
             entity,
             String::class.java
-        ).body?.let {
+        )
+        clashConfig.subscriptionUserinfo = responseEntity.headers.getFirst("subscription-userinfo")
+        responseEntity.body?.let {
             clashConfig.content = it
         }
     }
@@ -76,6 +79,7 @@ class ClashConfigServiceImpl(
     }
 
     override fun allClashConfigs(): List<ClashConfig> {
-        return clashConfigRepository.findAll()
+        val example = Example.of(ClashConfig(enabled = true))
+        return clashConfigRepository.findAll(example)
     }
 }

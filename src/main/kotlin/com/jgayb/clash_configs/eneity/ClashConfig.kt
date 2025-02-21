@@ -12,7 +12,7 @@ data class ClashConfig(
     var id: String? = null,
     var url: String? = null,
     var name: String? = null,
-    var enabled: Boolean = false,
+    var enabled: Boolean = true,
     @Enumerated(EnumType.STRING)
     var updateSchedule: UpdateSchedule = UpdateSchedule.DAY,
     @Column(length = 50000)
@@ -21,6 +21,7 @@ data class ClashConfig(
     var createdAt: Date? = null,
     @LastModifiedDate
     var updatedAt: Date? = null,
+    var subscriptionUserinfo: String? = null,
 )
 
 enum class UpdateSchedule {
