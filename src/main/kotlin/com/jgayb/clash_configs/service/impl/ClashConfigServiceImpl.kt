@@ -11,9 +11,11 @@ import org.springframework.data.domain.Example
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.server.ResponseStatusException
 import java.util.*
 
 @Service
@@ -78,6 +80,19 @@ class ClashConfigServiceImpl(
         clashConfig.createdAt = Date()
         clashConfig.updatedAt = Date()
         return clashConfigRepository.save(clashConfig)
+    }
+
+    override fun detail(id: String, renew: Boolean): ClashConfig {
+        val opt = clashConfigRepository.findById(id)
+        if (!opt.isPresent) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        }
+        val config = opt.get()
+        if (renew) {
+            fetchConfigFromRemote(config)
+            return clashConfigRepository.save(config)
+        }
+        return config
     }
 
     override fun allClashConfigs(): List<ClashConfig> {
