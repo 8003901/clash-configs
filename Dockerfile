@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 RUN mkdir  /root/.gradle
 
-RUN cat > change_mirror.sh <<EOF \
+RUN cat > change_mirror.sh \<\<EOF \
     #!/bin/sh \
     # 检查是否以 root 权限运行 \
     if [ "$(id -u)" -ne 0 ]; then \
