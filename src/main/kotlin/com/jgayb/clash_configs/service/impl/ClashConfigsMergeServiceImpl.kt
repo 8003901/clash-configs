@@ -67,6 +67,12 @@ open class ClashConfigsMergeServiceImpl(
         return clashConfigsMergeRepository.save(clashConfigsMerge)
     }
 
+    override fun detail(id: String): ClashConfigsMerge {
+        return clashConfigsMergeRepository.findById(id).orElseThrow {
+            return@orElseThrow ResponseStatusException(HttpStatus.NOT_FOUND)
+        }
+    }
+
     @Transactional
     override fun refreshToken(id: String): ClashConfigsMerge {
         var optCcm = clashConfigsMergeRepository

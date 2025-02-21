@@ -74,4 +74,8 @@ class ClashConfigServiceImpl(
         clashConfig.updatedAt = Date()
         return clashConfigRepository.save(clashConfig)
     }
+
+    override fun allClashConfigs(): List<ClashConfig> {
+        return clashConfigRepository.findAll()
+    }
 }

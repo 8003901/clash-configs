@@ -17,11 +17,16 @@ import org.springframework.web.server.ResponseStatusException
 @RestController
 @RequestMapping("/clash_configs_merge")
 class ClashConfigsMergeController(
-    private val clashConfigsMergeService: ClashConfigsMergeService
+    private val clashConfigsMergeService: ClashConfigsMergeService,
 ) {
     @PostMapping
     fun create(@RequestBody @Validated clashConfigsMergeAdd: ClashConfigsMergeAdd): ClashConfigsMerge {
         return clashConfigsMergeService.create(clashConfigsMergeAdd.name, clashConfigsMergeAdd.configIds)
+    }
+
+    @GetMapping
+    fun detail(@RequestParam id: String): ClashConfigsMerge {
+        return clashConfigsMergeService.detail(id)
     }
 
     @PutMapping

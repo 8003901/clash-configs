@@ -6,4 +6,6 @@ interface ClashConfigService {
 
     fun saveClashConfig(clashConfig: ClashConfig): ClashConfig
 
+    fun allClashConfigs(): List<ClashConfig>
+
 }

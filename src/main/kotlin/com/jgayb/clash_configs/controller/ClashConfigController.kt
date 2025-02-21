@@ -30,6 +30,11 @@ class ClashConfigController(
         return clashConfigService.saveClashConfig(cc)
     }
 
+    @PostMapping
+    fun list(): List<ClashConfig> {
+        return clashConfigService.allClashConfigs()
+    }
+
 
 }
 
