@@ -90,6 +90,7 @@ class ClashConfigServiceImpl(
         val config = opt.get()
         if (renew) {
             fetchConfigFromRemote(config)
+            config.updatedAt = Date()
             return clashConfigRepository.save(config)
         }
         return config
