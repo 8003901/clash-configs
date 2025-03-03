@@ -14,7 +14,7 @@ import java.util.stream.Stream
 interface ClashConfigRepository : JpaRepository<ClashConfig, String> {
 
     @Query("select t from ClashConfig t where t.updateSchedule = :fre")
-    @QueryHints(value = [QueryHint(name = HINT_FETCH_SIZE, value = "" + Int.MIN_VALUE)])
+    @QueryHints(value = [QueryHint(name = HINT_FETCH_SIZE, value = "1000")])
     fun streamAll(@Param("fre") fre: UpdateSchedule): Stream<ClashConfig>?
 
 }

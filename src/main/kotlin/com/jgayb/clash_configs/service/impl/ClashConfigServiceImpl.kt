@@ -14,6 +14,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.server.ResponseStatusException
 import java.util.*
@@ -26,6 +27,7 @@ class ClashConfigServiceImpl(
     private var log: Logger = LoggerFactory.getLogger(this.javaClass)
 
     @Scheduled(cron = "0 0 2 * * ?")
+    @Transactional
     fun renewConfigDaily() {
         clashConfigRepository.streamAll(UpdateSchedule.DAY)
             ?.forEach { clashConfig ->
@@ -35,6 +37,7 @@ class ClashConfigServiceImpl(
     }
 
     @Scheduled(cron = "0 0 1 ? * MON")
+    @Transactional
     fun renewConfigWeekly() {
         clashConfigRepository.streamAll(UpdateSchedule.WEEK)
             ?.forEach { clashConfig ->
