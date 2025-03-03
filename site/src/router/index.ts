@@ -6,7 +6,45 @@
 
 // Composables
 import { createRouter, createWebHistory } from 'vue-router/auto'
-import { routes } from 'vue-router/auto-routes'
+import Login from "@/components/Login.vue";
+import HelloWorld from "@/components/HelloWorld.vue";
+// import { routes } from 'vue-router/auto-routes'
+
+// 定义路由
+const routes = [
+  // {
+  //   path: '/',
+  //   name: 'Main',
+  //   component: Main,
+  //   children: [
+  //     {
+  //       path: '',
+  //       name: 'home',
+  //       component: HelloWorld
+  //     },
+  //     {
+  //       path: 'roles',
+  //       name: 'roles',
+  //       component: Role
+  //     },
+  //     {
+  //       path: 'users',
+  //       name: 'users',
+  //       component: User
+  //     },
+  //     {
+  //       path: 'menus',
+  //       name: 'menus',
+  //       component: Menus
+  //     },
+  //   ],
+  // },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
