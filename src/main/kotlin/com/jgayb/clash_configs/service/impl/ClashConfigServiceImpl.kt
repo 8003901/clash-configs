@@ -31,8 +31,12 @@ class ClashConfigServiceImpl(
     fun renewConfigDaily() {
         clashConfigRepository.streamAll(UpdateSchedule.DAY)
             ?.forEach { clashConfig ->
-                fetchConfigFromRemote(clashConfig)
-                clashConfigRepository.save(clashConfig)
+                try {
+                    fetchConfigFromRemote(clashConfig)
+                    clashConfigRepository.save(clashConfig)
+                } catch (ex: Exception) {
+                    log.error("Error during clash config renew", ex)
+                }
             }
     }
 

@@ -15,7 +15,7 @@ data class ClashConfig(
     var enabled: Boolean = true,
     @Enumerated(EnumType.STRING)
     var updateSchedule: UpdateSchedule = UpdateSchedule.DAY,
-    @Column(length = 50000)
+    @Column(length = 500000)
     var content: String? = null,
     @CreatedDate
     var createdAt: Date? = null,
