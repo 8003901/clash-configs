@@ -109,4 +109,9 @@ class ClashConfigServiceImpl(
         val example = Example.of(ClashConfig(enabled = true))
         return clashConfigRepository.findAll(example)
     }
+
+    @Transactional
+    override fun deleteClashConfig(id: String) {
+        clashConfigRepository.deleteById(id)
+    }
 }

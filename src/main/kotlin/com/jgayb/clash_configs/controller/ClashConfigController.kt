@@ -37,6 +37,11 @@ class ClashConfigController(
         return clashConfigService.allClashConfigs()
     }
 
+    @DeleteMapping("/{id}")
+    fun deleteClashConfig(@PathVariable id: String) {
+        clashConfigService.deleteClashConfig(id)
+    }
+
 
 }
 

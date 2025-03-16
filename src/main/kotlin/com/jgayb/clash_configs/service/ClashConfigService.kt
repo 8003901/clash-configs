@@ -10,4 +10,6 @@ interface ClashConfigService {
 
     fun allClashConfigs(): List<ClashConfig>
 
+    fun deleteClashConfig(id: String)
+
 }
