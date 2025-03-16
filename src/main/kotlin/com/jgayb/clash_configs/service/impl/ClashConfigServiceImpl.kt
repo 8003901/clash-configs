@@ -34,6 +34,7 @@ class ClashConfigServiceImpl(
                 try {
                     fetchConfigFromRemote(clashConfig)
                     log.info("每日更新 ${clashConfig.name}")
+                    clashConfig.updatedAt = Date()
                     clashConfigRepository.save(clashConfig)
                 } catch (ex: Exception) {
                     log.error("Error during clash config renew", ex)
@@ -48,6 +49,7 @@ class ClashConfigServiceImpl(
             ?.forEach { clashConfig ->
                 fetchConfigFromRemote(clashConfig)
                 log.info("每周更新 ${clashConfig.name}")
+                clashConfig.updatedAt = Date()
                 clashConfigRepository.save(clashConfig)
             }
     }
