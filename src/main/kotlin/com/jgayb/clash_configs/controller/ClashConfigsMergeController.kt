@@ -98,9 +98,11 @@ class ConfigController(
         }
         (tempNode.get("proxy-groups") as ArrayNode).removeAll {
             val r = (it.get("proxies") as ArrayNode).isEmpty
-            tempNode.get("proxy-groups").forEach { group ->
-                (group.get("proxies") as ArrayNode).removeAll { g->
-                    g.asText() ==  it.get("name").asText()
+            if (r) {
+                tempNode.get("proxy-groups").forEach { group ->
+                    (group.get("proxies") as ArrayNode).removeAll { g ->
+                        g.asText() == it.get("name").asText()
+                    }
                 }
             }
             return@removeAll r
