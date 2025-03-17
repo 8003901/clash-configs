@@ -97,7 +97,13 @@ class ConfigController(
             processProxyGroup(group as ObjectNode, proxyNames, proxies)
         }
         (tempNode.get("proxy-groups") as ArrayNode).removeAll {
-            return@removeAll (it.get("proxies") as ArrayNode).isEmpty
+            val r = (it.get("proxies") as ArrayNode).isEmpty
+            tempNode.get("proxy-groups").forEach { group ->
+                (group.get("proxies") as ArrayNode).removeAll { g->
+                    g.asText() ==  it.get("name").asText()
+                }
+            }
+            return@removeAll r
         }
 
         return yamlMapper.writeValueAsString(tempNode).replaceFirst("---\n", "")
