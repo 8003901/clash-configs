@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
+import java.io.ByteArrayInputStream
 import kotlin.math.min
 
 @RestController
@@ -66,13 +67,33 @@ class ConfigController(
         val proxies = tempNode.get("proxies") as ArrayNode
         val proxyNames = objectMapper.createArrayNode()
 
+        // 修改前
+//        configsMerge.configs
+//            ?.filter { it.content?.isNotEmpty() == true }
+//            ?.forEach { config ->
+//                yamlMapper.readTree(config.content)
+//                    .get("proxies")
+//                    ?.takeIf { it.isArray }
+//                    ?.let { proxies.addAll(it as ArrayNode) }
+//            }
+        
+        // 修改后
         configsMerge.configs
             ?.filter { it.content?.isNotEmpty() == true }
             ?.forEach { config ->
-                yamlMapper.readTree(config.content)
-                    .get("proxies")
-                    ?.takeIf { it.isArray }
-                    ?.let { proxies.addAll(it as ArrayNode) }
+                try {
+                    // 使用InputStreamReader来避免snakeyaml的1024字符边界问题
+                    val yamlNode = yamlMapper.readTree(config.content?.byteInputStream() ?: ByteArrayInputStream(
+                        ByteArray(0)
+                    )
+                    )
+                    yamlNode.get("proxies")
+                        ?.takeIf { it.isArray }
+                        ?.let { proxies.addAll(it as ArrayNode) }
+                } catch (e: Exception) {
+                    // 记录日志并跳过无效的配置
+                    println("Error processing config ${config.name}: ${e.message}")
+                }
             }
 
         val dataUsage =
