@@ -136,16 +136,16 @@ class ConfigController(
         val infos = data.split(";")
         val upload = infos.map(String::trim).find {
             it.startsWith("upload")
-        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        }?.split("=")?.map(String::trim)?.last()?.toLongOrNull() ?: 0
         val download = infos.map(String::trim).find {
             it.startsWith("download")
-        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        }?.split("=")?.map(String::trim)?.last()?.toLongOrNull() ?: 0
         val total = infos.map(String::trim).find {
             it.startsWith("total")
-        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        }?.split("=")?.map(String::trim)?.last()?.toLongOrNull() ?: 0
         val expire = infos.map(String::trim).find {
             it.startsWith("expire")
-        }?.split("=")?.map(String::trim)?.last()?.toLong() ?: 0
+        }?.split("=")?.map(String::trim)?.last()?.toLongOrNull() ?: 0
         return DataUsage(upload = upload, download = download, total = total, expire = expire)
     }
 
