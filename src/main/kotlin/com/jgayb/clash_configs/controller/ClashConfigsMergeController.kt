@@ -1,5 +1,6 @@
 package com.jgayb.clash_configs.controller
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
@@ -129,6 +130,8 @@ class ConfigController(
             return@removeAll r
         }
 
+
+
         return yamlMapper.writeValueAsString(tempNode).replaceFirst("---\n", "")
     }
 
@@ -180,6 +183,38 @@ class ConfigController(
             group.set<ArrayNode>("proxies", newProxies)
         }
     }
+
+    private fun checkRules(config: JsonNode) {
+        val groups = config.get("proxy-groups") as ArrayNode
+        val rules = config.get("rules") as ArrayNode
+        
+        // 获取所有proxy-groups的name
+        val groupNames = groups.map { it.get("name").asText() }.toSet()
+        
+        // 特殊组，不需要处理
+        val specialGroups = setOf("DIRECT", "REJECT", "REJECT-DROP", "REJECT-INT", "MATCH")
+        
+        // 遍历rules，检查第三个字段（或第二个字段如果只有两个）
+        for (i in 0 until rules.size()) {
+            val rule = rules.get(i).asText()
+            val parts = rule.split(",")
+            
+            // 确定要检查的字段索引
+            val targetIndex = if (parts.size >= 3) 2 else 1
+            
+            if (parts.size > targetIndex) {
+                val targetProxy = parts[targetIndex].trim()
+                
+                // 如果目标proxy不是特殊组，且不在groupNames中，则替换为"Main Node"
+                if (targetProxy.isNotEmpty() && !specialGroups.contains(targetProxy) && !groupNames.contains(targetProxy)) {
+                    val newParts = parts.toMutableList()
+                    newParts[targetIndex] = "Main Node"
+                    rules.set(i, newParts.joinToString(","))
+                }
+            }
+        }
+    }
+
 }
 
 data class DataUsage(val upload: Long, val download: Long, val total: Long, val expire: Long)
