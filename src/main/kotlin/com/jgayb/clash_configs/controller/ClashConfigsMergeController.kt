@@ -130,7 +130,7 @@ class ConfigController(
             return@removeAll r
         }
 
-
+        this.checkRules(tempNode)
 
         return yamlMapper.writeValueAsString(tempNode).replaceFirst("---\n", "")
     }
