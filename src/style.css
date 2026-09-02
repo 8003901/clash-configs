@@ -1,0 +1,149 @@
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn-vue/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC',
+        'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+    --font-heading: var(--font-sans);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+}
+
+/*
+ * 配色参考 clash-verge-rev（浅色 / 深色）
+ * 主色 Apple 蓝，辅色橙，扁平无阴影
+ */
+:root {
+    color-scheme: light;
+    --background: #f5f5f5;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #007aff;
+    --primary-foreground: #ffffff;
+    --secondary: #f0f0f0;
+    --secondary-foreground: #000000;
+    --muted: #f0f0f0;
+    --muted-foreground: #6e6e73;
+    --accent: #f0f0f0;
+    --accent-foreground: #000000;
+    --destructive: #ff3b30;
+    --border: rgb(0 0 0 / 8%);
+    --input: rgb(0 0 0 / 12%);
+    --ring: #007aff;
+    --chart-1: #007aff;
+    --chart-2: #ff9500;
+    --chart-3: #06943d;
+    --chart-4: #af52de;
+    --chart-5: #ff3b30;
+    --radius: 0.5rem;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #000000;
+    --sidebar-primary: #007aff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e9e9eb;
+    --sidebar-accent-foreground: #000000;
+    --sidebar-border: rgb(0 0 0 / 8%);
+    --sidebar-ring: #007aff;
+}
+
+.dark {
+    color-scheme: dark;
+    --background: #2e303d;
+    --foreground: #ffffff;
+    --card: #363948;
+    --card-foreground: #ffffff;
+    --popover: #363948;
+    --popover-foreground: #ffffff;
+    --primary: #0a84ff;
+    --primary-foreground: #ffffff;
+    --secondary: #3a3e52;
+    --secondary-foreground: #ffffff;
+    --muted: #3a3e52;
+    --muted-foreground: #9a9aa6;
+    --accent: #3a3e52;
+    --accent-foreground: #ffffff;
+    --destructive: #ff453a;
+    --border: rgb(255 255 255 / 8%);
+    --input: rgb(255 255 255 / 12%);
+    --ring: #0a84ff;
+    --chart-1: #0a84ff;
+    --chart-2: #ff9f0a;
+    --chart-3: #30d158;
+    --chart-4: #bf5af2;
+    --chart-5: #ff453a;
+    --sidebar: #262833;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #0a84ff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #363948;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: rgb(255 255 255 / 8%);
+    --sidebar-ring: #0a84ff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    @apply font-sans;
+    }
+}
+
+/* Toast：中性底色 + 按类型着色图标（vue-sonner 渲染到 body，需全局样式） */
+[data-sonner-toast][data-type='success'] [data-icon] {
+  color: var(--chart-3);
+}
+[data-sonner-toast][data-type='error'] [data-icon] {
+  color: var(--destructive);
+}
+[data-sonner-toast][data-type='info'] [data-icon] {
+  color: var(--primary);
+}
+[data-sonner-toast][data-type='warning'] [data-icon] {
+  color: var(--chart-2);
+}
+[data-sonner-toast][data-type='loading'] [data-icon] {
+  color: var(--primary);
+}
