@@ -29,14 +29,20 @@ class ClashConfigsMergeController(
     }
 
     @GetMapping
-    fun detail(@RequestParam id: String): ClashConfigsMerge {
+    fun list(): List<ClashConfigsMerge> {
+        return clashConfigsMergeService.list()
+    }
+
+    @GetMapping("/{id}")
+    fun detail(@PathVariable id: String): ClashConfigsMerge {
         return clashConfigsMergeService.detail(id)
     }
 
-    @PutMapping
-    fun update(@Validated @RequestBody clashConfigsMergeUpdate: ClashConfigsMergeUpdate): ClashConfigsMerge {
+    @PutMapping("/{id}")
+    fun update(@PathVariable id: String, @Validated @RequestBody clashConfigsMergeUpdate: ClashConfigsMergeUpdate): ClashConfigsMerge {
         val ccm = ClashConfigsMerge()
         BeanUtils.copyProperties(clashConfigsMergeUpdate, ccm)
+        ccm.id = id
         return clashConfigsMergeService.save(ccm)
     }
 
@@ -224,7 +230,6 @@ data class ClashConfigsMergeAdd(
 )
 
 data class ClashConfigsMergeUpdate(
-    @NotBlank var id: String? = null,
     @NotBlank var name: String? = null,
     @NotBlank var config: String? = null,
     var configs: MutableList<ClashConfig>? = null

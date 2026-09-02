@@ -73,6 +73,10 @@ open class ClashConfigsMergeServiceImpl(
         }
     }
 
+    override fun list(): List<ClashConfigsMerge> {
+        return clashConfigsMergeRepository.findAll()
+    }
+
     @Transactional
     override fun refreshToken(id: String): ClashConfigsMerge {
         var optCcm = clashConfigsMergeRepository

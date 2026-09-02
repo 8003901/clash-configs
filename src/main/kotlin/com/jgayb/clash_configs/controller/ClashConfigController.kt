@@ -17,9 +17,19 @@ class ClashConfigController(
 
 
     @PostMapping
-    fun saveOrUpdateClashConfig(@RequestBody @Validated clashConfigAdd: ClashConfigAdd): ClashConfig {
+    fun create(@RequestBody @Validated clashConfigAdd: ClashConfigAdd): ClashConfig {
         val cc = ClashConfig()
-        cc.id = clashConfigAdd.id
+        cc.name = clashConfigAdd.name
+        cc.url = clashConfigAdd.url
+        cc.updateSchedule = clashConfigAdd.updateSchedule
+        cc.enabled = clashConfigAdd.enabled
+        return clashConfigService.saveClashConfig(cc)
+    }
+
+    @PutMapping("/{id}")
+    fun update(@PathVariable id: String, @RequestBody @Validated clashConfigAdd: ClashConfigAdd): ClashConfig {
+        val cc = ClashConfig()
+        cc.id = id
         cc.name = clashConfigAdd.name
         cc.url = clashConfigAdd.url
         cc.updateSchedule = clashConfigAdd.updateSchedule
@@ -46,7 +56,6 @@ class ClashConfigController(
 }
 
 data class ClashConfigAdd(
-    var id: String? = null,
     @NotBlank
     var url: String? = null,
     @NotBlank

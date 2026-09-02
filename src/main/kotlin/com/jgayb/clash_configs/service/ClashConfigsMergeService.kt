@@ -10,6 +10,8 @@ interface ClashConfigsMergeService {
 
     fun detail(id: String): ClashConfigsMerge
 
+    fun list(): List<ClashConfigsMerge>
+
     fun refreshToken(id: String): ClashConfigsMerge
 
     fun findByToken(token: String): ClashConfigsMerge?

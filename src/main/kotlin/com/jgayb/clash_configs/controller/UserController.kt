@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class UserController(val userService: UserService) {
 
-    @PutMapping("/password")
+    @PutMapping("/users/me/password")
     fun changePassword(@RequestBody passwordUpdate: PasswordUpdate) {
         val ud = SecurityContextHolder.getContext().authentication.principal as UserDetails
         userService.changePwd(ud.username, passwordUpdate.newPassword, passwordUpdate.oldPassword)
