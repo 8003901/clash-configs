@@ -1,0 +1,16 @@
+# 减少 Docker 构建上下文体积，避免把 git 历史 / node_modules / 构建产物传进 daemon
+.git/
+.gradle/
+**/build/
+**/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+docs/
+.vscode/
+.claude/
+.superpowers/
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store

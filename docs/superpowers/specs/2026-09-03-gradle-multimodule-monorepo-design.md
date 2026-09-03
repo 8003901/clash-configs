@@ -74,7 +74,7 @@ clash/                         # 根 monorepo（rootProject.name = 'clash-config
 ### 3. frontend 模块
 - 新建 `build.gradle`：
   ```groovy
-  plugins { id 'com.github.node-gradle.node' version '7.1.0' }
+  plugins { id 'com.github.node-gradle.node' version '7.0.1' }
   node {
       version = '22.12.0'
       download = true
