@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import AppLayout from '@/components/AppLayout.vue'
 import { useAuth } from '@/composables/useAuth'
 import ConfigsView from '@/views/ConfigsView.vue'
@@ -8,7 +8,7 @@ import MergesView from '@/views/MergesView.vue'
 import PasswordView from '@/views/PasswordView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView, meta: { public: true } },
     {

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { API_BASE } from '@/lib/config'
 import { http } from './http'
 
 /** 通过访问受保护接口判断当前会话是否已认证 */
@@ -17,7 +18,7 @@ export async function login(username: string, password: string): Promise<boolean
   body.append('username', username)
   body.append('password', password)
   try {
-    await axios.post('/api/login', body, {
+    await axios.post(`${API_BASE}/login`, body, {
       withCredentials: true,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       transformResponse: [(data) => data],
@@ -31,7 +32,7 @@ export async function login(username: string, password: string): Promise<boolean
 
 export async function logout(): Promise<void> {
   try {
-    await axios.post('/api/logout', null, {
+    await axios.post(`${API_BASE}/logout`, null, {
       withCredentials: true,
       transformResponse: [(data) => data],
     })
