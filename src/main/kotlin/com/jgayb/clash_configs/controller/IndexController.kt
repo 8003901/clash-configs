@@ -1,14 +1,12 @@
 package com.jgayb.clash_configs.controller
 
+import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RestController
 
-@RestController
+@Controller
 class IndexController {
 
     @GetMapping("/", "")
-    fun home(): String {
-        return "Hello Clash!"
-    }
+    fun index(): String = "forward:/index.html"
 
 }
