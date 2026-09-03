@@ -1,0 +1,18 @@
+plugins {
+    id 'com.github.node-gradle.node' version '7.0.1'
+}
+
+node {
+    // Vite 8 需要 Node >= 20.19
+    version = '22.12.0'
+    download = true
+    // 国内网络下载 Node 走 npmmirror 镜像；非国内环境可删除此行
+    distBaseUrl = 'https://npmmirror.com/mirrors/node'
+    // 可选：npm 安装走 npmmirror registry
+    // npmInstallCommandArgs = ['--registry=https://registry.npmmirror.com']
+}
+
+// 插件不保证 npm_run_build 自动依赖 npmInstall，这里显式挂上
+tasks.named('npm_run_build') {
+    dependsOn 'npmInstall'
+}
