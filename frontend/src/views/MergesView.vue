@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Copy, ExternalLink, Pencil, Plus, RefreshCw } from '@lucide/vue'
-import { onMounted, reactive, ref } from 'vue'
+import { Braces, Copy, ExternalLink, Pencil, Plus, RefreshCw } from '@lucide/vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { listConfigs } from '@/api/config'
 import {
@@ -31,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Textarea } from '@/components/ui/textarea'
 import { BACKEND_URL } from '@/lib/config'
 import { formatDateTime } from '@/lib/format'
 import type { ClashConfig, ClashConfigsMerge } from '@/types'
@@ -47,6 +47,7 @@ const merges = ref<ClashConfigsMerge[]>([])
 const configs = ref<ClashConfig[]>([])
 const loading = ref(false)
 const saving = ref(false)
+const router = useRouter()
 
 const dialogOpen = ref(false)
 const form = reactive<FormState>({
@@ -54,6 +55,16 @@ const form = reactive<FormState>({
   name: '',
   selectedIds: [],
   config: '',
+})
+
+// 已选中的订阅置顶，编辑时一眼看到当前选中了哪些
+const sortedConfigs = computed(() => {
+  const selected = new Set(form.selectedIds)
+  return [...configs.value].sort((a, b) => {
+    const aSel = selected.has(a.id ?? '') ? 1 : 0
+    const bSel = selected.has(b.id ?? '') ? 1 : 0
+    return bSel - aSel
+  })
 })
 
 async function load() {
@@ -89,12 +100,17 @@ async function openEdit(merge: ClashConfigsMerge) {
   }
 }
 
-function toggleConfig(id: string, checked: boolean) {
-  if (checked) {
+function toggleConfig(id: string, checked: boolean | 'indeterminate') {
+  if (checked === true) {
     if (!form.selectedIds.includes(id)) form.selectedIds.push(id)
   } else {
     form.selectedIds = form.selectedIds.filter((x) => x !== id)
   }
+}
+
+function goTemplate(id: string) {
+  dialogOpen.value = false
+  router.push({ name: 'merge-template', params: { id } })
 }
 
 async function submit() {
@@ -209,6 +225,14 @@ onMounted(load)
               <Button variant="ghost" size="icon-sm" title="刷新 Token" @click="refreshToken(merge)">
                 <RefreshCw class="size-4" />
               </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="编辑配置模板"
+                @click="goTemplate(merge.id ?? '')"
+              >
+                <Braces class="size-4" />
+              </Button>
               <Button variant="ghost" size="icon-sm" title="编辑" @click="openEdit(merge)">
                 <Pencil class="size-4" />
               </Button>
@@ -238,13 +262,13 @@ onMounted(load)
             <Label>选择订阅</Label>
             <div class="max-h-48 space-y-0.5 overflow-y-auto rounded-md border p-1.5">
               <label
-                v-for="(config, i) in configs"
+                v-for="(config, i) in sortedConfigs"
                 :key="config.id ?? i"
                 class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
               >
                 <Checkbox
-                  :checked="form.selectedIds.includes(config.id ?? '')"
-                  @update:checked="toggleConfig(config.id ?? '', $event)"
+                  :model-value="form.selectedIds.includes(config.id ?? '')"
+                  @update:model-value="toggleConfig(config.id ?? '', $event)"
                 />
                 <span class="truncate">{{ config.name }}</span>
               </label>
@@ -254,13 +278,11 @@ onMounted(load)
             </div>
           </div>
           <div v-if="form.id" class="space-y-2">
-            <Label for="merge-config">配置模板（JSON，可选编辑）</Label>
-            <Textarea
-              id="merge-config"
-              v-model="form.config"
-              class="h-40 font-mono text-xs"
-              placeholder="{}"
-            />
+            <Label>配置模板（JSON）</Label>
+            <Button variant="outline" class="w-full" @click="goTemplate(form.id ?? '')">
+              <Braces class="size-4" />
+              在独立页面编辑配置模板
+            </Button>
           </div>
         </div>
         <DialogFooter>

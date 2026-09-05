@@ -20,6 +20,11 @@ const router = createRouter({
         { path: 'dashboard', name: 'dashboard', component: DashboardView },
         { path: 'configs', name: 'configs', component: ConfigsView },
         { path: 'merges', name: 'merges', component: MergesView },
+        {
+          path: 'merges/:id/template',
+          name: 'merge-template',
+          component: () => import('@/views/MergeTemplateView.vue'),
+        },
         { path: 'password', name: 'password', component: PasswordView },
       ],
     },

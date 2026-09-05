@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Pencil, Plus, RefreshCw, Trash2 } from '@lucide/vue'
+import { Copy, Eye, Pencil, Plus, RefreshCw, Trash2 } from '@lucide/vue'
 import { onMounted, reactive, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { createConfig, deleteConfig, getConfig, listConfigs, updateConfig } from '@/api/config'
@@ -41,7 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatDateTime } from '@/lib/format'
+import { formatBytes, formatDateTime, parseUserInfo } from '@/lib/format'
 import type { ClashConfig, UpdateSchedule } from '@/types'
 
 interface FormState {
@@ -67,6 +67,9 @@ const form = reactive<FormState>({
 
 const deleteOpen = ref(false)
 const deleteTarget = ref<ClashConfig | null>(null)
+
+const previewOpen = ref(false)
+const previewTarget = ref<ClashConfig | null>(null)
 
 async function load() {
   loading.value = true
@@ -154,6 +157,32 @@ async function confirmDelete() {
   }
 }
 
+function openPreview(config: ClashConfig) {
+  previewTarget.value = config
+  previewOpen.value = true
+}
+
+async function copyPreview() {
+  const text = previewTarget.value?.content ?? ''
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success('已复制')
+  } catch {
+    toast.error('复制失败，请手动复制')
+  }
+}
+
+function usageText(config: ClashConfig): string {
+  const u = parseUserInfo(config.subscriptionUserinfo)
+  if (u.total <= 0 && u.upload <= 0 && u.download <= 0) return '-'
+  const used = u.upload + u.download
+  const base = `${formatBytes(used)} / ${formatBytes(u.total)}`
+  if (u.total <= 0) return base
+  const pct = Math.round((used / u.total) * 100)
+  return `${base} (${pct}%)`
+}
+
 onMounted(load)
 </script>
 
@@ -176,6 +205,7 @@ onMounted(load)
           <TableHead>名称</TableHead>
           <TableHead>订阅地址</TableHead>
           <TableHead>更新周期</TableHead>
+          <TableHead>使用量</TableHead>
           <TableHead>启用</TableHead>
           <TableHead>更新时间</TableHead>
           <TableHead class="text-right">操作</TableHead>
@@ -190,6 +220,9 @@ onMounted(load)
           <TableCell>
             <Badge variant="outline">{{ config.updateSchedule === 'WEEK' ? '每周' : '每天' }}</Badge>
           </TableCell>
+          <TableCell class="text-muted-foreground">
+            {{ usageText(config) }}
+          </TableCell>
           <TableCell>
             <Badge :variant="config.enabled ? 'secondary' : 'destructive'">
               {{ config.enabled ? '启用' : '停用' }}
@@ -200,6 +233,9 @@ onMounted(load)
           </TableCell>
           <TableCell class="text-right">
             <div class="flex justify-end gap-1">
+              <Button variant="ghost" size="icon-sm" title="预览" @click="openPreview(config)">
+                <Eye class="size-4" />
+              </Button>
               <Button variant="ghost" size="icon-sm" title="手动更新" @click="renew(config)">
                 <RefreshCw class="size-4" />
               </Button>
@@ -213,7 +249,7 @@ onMounted(load)
           </TableCell>
         </TableRow>
         <TableRow v-if="!loading && configs.length === 0">
-          <TableCell colspan="6" class="text-center text-muted-foreground">
+          <TableCell colspan="7" class="text-center text-muted-foreground">
             暂无订阅配置，点击右上角「新增配置」添加
           </TableCell>
         </TableRow>
@@ -257,6 +293,27 @@ onMounted(load)
           <Button :disabled="saving" @click="submit">
             {{ saving ? '保存中…' : '保存' }}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog v-model:open="previewOpen">
+      <DialogContent class="sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>预览：{{ previewTarget?.name ?? '-' }}</DialogTitle>
+          <DialogDescription class="truncate">{{ previewTarget?.url ?? '' }}</DialogDescription>
+        </DialogHeader>
+        <pre
+          v-if="previewTarget?.content"
+          class="max-h-[60vh] overflow-auto rounded-md border bg-muted/50 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all text-muted-foreground"
+        >{{ previewTarget.content }}</pre>
+        <p v-else class="py-8 text-center text-sm text-muted-foreground">暂无内容（可能尚未拉取成功）</p>
+        <DialogFooter>
+          <Button variant="outline" :disabled="!previewTarget?.content" @click="copyPreview">
+            <Copy class="size-4" />
+            复制
+          </Button>
+          <Button variant="outline" @click="previewOpen = false">关闭</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

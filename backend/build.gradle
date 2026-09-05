@@ -65,3 +65,24 @@ allOpen {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// —— 本地调试：先构建前端，再把产物同步到后端静态目录 ——
+// 只挂在 bootRun 上，不挂 processResources/build，避免破坏 Docker 构建（Docker 只 build 后端、不装 Node）。
+def frontendDistDir = "${rootProject.projectDir}/frontend/dist"
+def backendStaticDir = "${projectDir}/src/main/resources/static"
+
+tasks.register('syncFrontend', Sync) {
+    dependsOn ':frontend:npm_run_build'
+    from frontendDistDir
+    into backendStaticDir
+}
+
+// 静态目录是 processResources 的输入源，声明顺序避免 Gradle 的隐式依赖校验报错。
+// 用 mustRunAfter 而非 dependsOn：只在两者都执行时保证同步在前，不会让 build/Docker 强制构建前端。
+tasks.named('processResources') {
+    mustRunAfter 'syncFrontend'
+}
+
+tasks.named('bootRun') {
+    dependsOn 'syncFrontend'
+}
