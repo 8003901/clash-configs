@@ -7,7 +7,7 @@
 *.iml
 *.ipr
 *.iws
-
+data/
 # Gradle
 .gradle/
 build/
