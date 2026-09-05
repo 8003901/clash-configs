@@ -10,6 +10,7 @@ import com.jgayb.clash_configs.eneity.ClashConfigsMerge
 import com.jgayb.clash_configs.service.ClashConfigsMergeService
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.constraints.NotBlank
+import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanUtils
 import org.springframework.http.HttpStatus
 import org.springframework.validation.annotation.Validated
@@ -59,6 +60,12 @@ class ConfigController(
     private val objectMapper: ObjectMapper
 ) {
     private val yamlMapper = YAMLMapper()
+    private val log = LoggerFactory.getLogger(ConfigController::class.java)
+
+    private companion object {
+        // 流量用量阈值：已用(upload+download)超过总量的该百分比时，跳过该配置
+        const val USAGE_LIMIT_PERCENT = 95L
+    }
 
     @GetMapping(produces = ["text/plain"])
     fun query(@RequestParam token: String, httpServletResponse: HttpServletResponse): String {
@@ -84,27 +91,30 @@ class ConfigController(
 //                    ?.let { proxies.addAll(it as ArrayNode) }
 //            }
         
-        // 修改后
-        configsMerge.configs
+        // 过滤掉无内容、或流量用量超过阈值(95%)的配置，避免其节点被加入合并
+        val configs = configsMerge.configs
             ?.filter { it.content?.isNotEmpty() == true }
-            ?.forEach { config ->
-                try {
-                    // 使用InputStreamReader来避免snakeyaml的1024字符边界问题
-                    val yamlNode = yamlMapper.readTree(config.content?.byteInputStream() ?: ByteArrayInputStream(
-                        ByteArray(0)
-                    )
-                    )
-                    yamlNode.get("proxies")
-                        ?.takeIf { it.isArray }
-                        ?.let { proxies.addAll(it as ArrayNode) }
-                } catch (e: Exception) {
-                    // 记录日志并跳过无效的配置
-                    println("Error processing config ${config.name}: ${e.message}")
-                }
+            ?.filterNot { isOverQuota(it) }
+            .orEmpty()
+
+        configs.forEach { config ->
+            try {
+                // 使用InputStreamReader来避免snakeyaml的1024字符边界问题
+                val yamlNode = yamlMapper.readTree(config.content?.byteInputStream() ?: ByteArrayInputStream(
+                    ByteArray(0)
+                )
+                )
+                yamlNode.get("proxies")
+                    ?.takeIf { it.isArray }
+                    ?.let { proxies.addAll(it as ArrayNode) }
+            } catch (e: Exception) {
+                // 记录日志并跳过无效的配置
+                println("Error processing config ${config.name}: ${e.message}")
             }
+        }
 
         val dataUsage =
-            configsMerge.configs?.mapNotNull(ClashConfig::subscriptionUserinfo)?.map(this::parse)?.reduce { c1, c2 ->
+            configs.mapNotNull(ClashConfig::subscriptionUserinfo).map(this::parse).reduceOrNull { c1, c2 ->
                 DataUsage(
                     upload = c1.upload + c2.upload,
                     download = c1.download + c2.download,
@@ -156,6 +166,20 @@ class ConfigController(
             it.startsWith("expire")
         }?.split("=")?.map(String::trim)?.last()?.toLongOrNull() ?: 0
         return DataUsage(upload = upload, download = download, total = total, expire = expire)
+    }
+
+    private fun isOverQuota(config: ClashConfig): Boolean {
+        val info = config.subscriptionUserinfo ?: return false
+        val usage = parse(info)
+        // 没有有效总量时无法判断用量，保留该配置
+        if (usage.total <= 0) return false
+        // 与前端仪表盘保持一致：已用 = upload + download
+        val used = usage.upload + usage.download
+        val over = used * 100 > usage.total * USAGE_LIMIT_PERCENT
+        if (over) {
+            log.warn("配置 {} 已用流量 {} 超过总量 {} 的 {}%，跳过合并", config.name, used, usage.total, USAGE_LIMIT_PERCENT)
+        }
+        return over
     }
 
     private fun processProxyGroup(group: ObjectNode, proxyNames: ArrayNode, proxies: ArrayNode) {

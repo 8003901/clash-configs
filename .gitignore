@@ -1,12 +1,17 @@
 # OS
 .DS_Store
 
-# IntelliJ IDEA
+# IDE / 编辑器
 .idea/
+.vscode/
 *.iml
 *.ipr
 *.iws
 
-# Gradle（根）
+# Gradle
 .gradle/
 build/
+
+# 本地工具与临时工作区
+.claude/
+.superpowers/
