@@ -14,7 +14,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        // 代理目标默认远端，可用 PROXY_TARGET 环境变量切换（见 package.json 的 dev:local / dev:remote）
+        target: process.env.PROXY_TARGET ?? 'https://config.jijuzhilian.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },

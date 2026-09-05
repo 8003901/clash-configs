@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "PROXY_TARGET=http://localhost:8080 VITE_BACKEND_URL=http://localhost:8080 vite",
+    "dev:remote": "PROXY_TARGET=https://config.jijuzhilian.com VITE_BACKEND_URL=https://config.jijuzhilian.com vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
   },
