@@ -5,6 +5,7 @@
 **/node_modules/
 frontend/dist/
 frontend/dist-ssr/
+backend/data/
 docs/
 .vscode/
 .claude/

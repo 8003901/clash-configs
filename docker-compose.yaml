@@ -2,12 +2,12 @@ services:
   clash-configs:
     image: clash-configs:0.0.1-SNAPSHOT
     build:
-      context: ../
-      dockerfile: backend/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8780:8780"
     volumes:
-      - ./data:/data
+      - ./backend/data:/data
     container_name: clash-configs
     restart: always
     environment:
