@@ -77,7 +77,6 @@ package store_test
 import (
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -179,8 +178,6 @@ func TestUserCRUD(t *testing.T) {
 		t.Fatalf("expected ErrRecordNotFound, got %v", err)
 	}
 }
-
-var _ = time.Now // keep import if unused in some builds
 ```
 
 - [ ] **Step 3: 运行测试确认失败**
@@ -386,6 +383,8 @@ import (
 	"strings"
 	"testing"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/8003901/clash-configs/backend-go/internal/merge"
 )
 
@@ -457,11 +456,43 @@ func TestMergeFilterKeyMatchesSubset(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// US group should only contain US-01 (filter US|美国), not HK-01
-	if strings.Contains(res.YAML, "US-01") && strings.Contains(res.YAML, "HK-01") {
-		// both present is fine globally; verify US group specifically by checking group block
+	var out map[string]any
+	if err := yaml.Unmarshal([]byte(res.YAML), &out); err != nil {
+		t.Fatalf("parse output yaml: %v", err)
 	}
-	_ = res
+	groups, _ := out["proxy-groups"].([]any)
+	byName := map[string]map[string]any{}
+	for _, g := range groups {
+		gm, _ := g.(map[string]any)
+		byName[gm["name"].(string)] = gm
+	}
+	us := stringSlice(byName["US"]["proxies"].([]any))
+	if !contains(us, "US-01") || contains(us, "HK-01") {
+		t.Fatalf("US group (filter US|美国) should contain US-01 but not HK-01: %v", us)
+	}
+	main := stringSlice(byName["Main Node"]["proxies"].([]any))
+	if !contains(main, "US-01") || !contains(main, "HK-01") {
+		t.Fatalf("Main Node group (filter all) should contain both: %v", main)
+	}
+}
+
+func stringSlice(in []any) []string {
+	out := make([]string, 0, len(in))
+	for _, v := range in {
+		if s, ok := v.(string); ok {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+func contains(ss []string, s string) bool {
+	for _, x := range ss {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }
 
 func TestMergeSkipsEmptyAndOverQuota(t *testing.T) {
