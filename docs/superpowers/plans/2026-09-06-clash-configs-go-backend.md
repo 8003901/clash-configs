@@ -1537,11 +1537,12 @@ func isAjax(r *http.Request) bool {
 }
 
 // requireAuth 鉴权中间件：未认证时 AJAX 返回 401 JSON，否则 302 跳转 /login。
-func (h *Handler) requireAuth() gin.HandlerFunc {
+// 独立函数（不依赖 Handler），由 Task 6 的路由以 requireAuth(h.sessions) 挂载。
+func requireAuth(sessions *SessionStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := c.Cookie(sessionCookie)
 		if err == nil {
-			if _, ok := h.sessions.Get(id); ok {
+			if _, ok := sessions.Get(id); ok {
 				c.Next()
 				return
 			}
@@ -2102,8 +2103,6 @@ func (h *Handler) queryConfig(c *gin.Context) {
 package web
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -2119,7 +2118,7 @@ func (h *Handler) Router() *gin.Engine {
 
 	// 受保护：业务 API
 	api := r.Group("")
-	api.Use(h.requireAuth())
+	api.Use(requireAuth(h.sessions))
 	{
 		api.GET("/clash_configs", h.listClashConfigs)
 		api.POST("/clash_configs", h.createClashConfig)
@@ -2138,8 +2137,6 @@ func (h *Handler) Router() *gin.Engine {
 
 	return r
 }
-
-var _ = http.StatusOK
 ```
 
 - [ ] **Step 6: 同步前端产物到静态目录**
