@@ -8,6 +8,14 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.jpa' version '1.9.25'
 }
 
+graalvmNative {
+    binaries {
+        main {
+            buildArgs.add('-H:-UseContainerSupport')
+        }
+    }
+}
+
 group = 'com.jgayb'
 version = '0.0.1-SNAPSHOT'
 test.enabled = false
