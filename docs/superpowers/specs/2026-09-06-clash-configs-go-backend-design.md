@@ -56,8 +56,8 @@ backend-go/
 │   ├── merge/merge.go           # 合并引擎（processConfig 核心）
 │   ├── web/                     # Gin 路由、handler、鉴权中间件、session
 │   └── scheduler/scheduler.go   # 每日/每周定时刷新
-├── web/                         # 前端构建产物（go:embed；构建前从 frontend/dist 同步）
-├── resources/config-template.json
+├── internal/web/static/         # 前端构建产物（go:embed；构建前从 frontend/dist 同步）
+├── internal/config/config-template.json
 ├── Dockerfile
 └── docker-compose.yaml（更新）
 ```
