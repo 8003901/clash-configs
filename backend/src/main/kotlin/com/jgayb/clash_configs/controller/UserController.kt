@@ -12,8 +12,12 @@ class UserController(val userService: UserService) {
 
     @PutMapping("/users/me/password")
     fun changePassword(@RequestBody passwordUpdate: PasswordUpdate) {
-        val ud = SecurityContextHolder.getContext().authentication.principal as UserDetails
-        userService.changePwd(ud.username, passwordUpdate.newPassword, passwordUpdate.oldPassword)
+        val authentication = requireNotNull(SecurityContextHolder.getContext().authentication) {
+            "Request has no authentication"
+        }
+        val ud = authentication.principal as UserDetails
+        val username = requireNotNull(ud.username) { "Authenticated user has no username" }
+        userService.changePwd(username, passwordUpdate.newPassword, passwordUpdate.oldPassword)
     }
 
 }

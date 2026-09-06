@@ -1,19 +1,11 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.9.25'
-    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.25'
-    id 'org.springframework.boot' version '3.4.2'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.2.21'
+    id 'org.springframework.boot' version '4.0.6'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.hibernate.orm' version '6.6.5.Final'
-    id 'org.graalvm.buildtools.native' version '0.10.4'
-    id 'org.jetbrains.kotlin.plugin.jpa' version '1.9.25'
-}
-
-graalvmNative {
-    binaries {
-        main {
-            buildArgs.add('-H:-UseContainerSupport')
-        }
-    }
+    id 'org.hibernate.orm' version '7.2.12.Final'
+    id 'org.graalvm.buildtools.native' version '1.1.1'
+    id 'org.jetbrains.kotlin.plugin.jpa' version '2.2.21'
 }
 
 group = 'com.jgayb'
@@ -22,8 +14,12 @@ test.enabled = false
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 24
 }
 
 repositories {
@@ -53,7 +49,9 @@ dependencies {
 }
 
 kotlin {
+    jvmToolchain(25)
     compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
         freeCompilerArgs.addAll '-Xjsr305=strict'
     }
 }

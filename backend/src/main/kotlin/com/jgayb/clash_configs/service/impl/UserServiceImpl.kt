@@ -45,7 +45,7 @@ class UserServiceImpl(
         }
     }
 
-    override fun loadUserByUsername(username: String): UserDetails? {
+    override fun loadUserByUsername(username: String): UserDetails {
         var user = userRepository.findByUsername(username)
 
         if (user == null) {
@@ -54,7 +54,7 @@ class UserServiceImpl(
         }
 
         return object : UserDetails {
-            override fun getAuthorities(): Collection<GrantedAuthority?>? {
+            override fun getAuthorities(): Collection<GrantedAuthority> {
                 return setOf(SimpleGrantedAuthority("ADMIN"))
             }
 
@@ -62,8 +62,8 @@ class UserServiceImpl(
                 return user.password
             }
 
-            override fun getUsername(): String? {
-                return user.username
+            override fun getUsername(): String {
+                return requireNotNull(user.username)
             }
 
         }
