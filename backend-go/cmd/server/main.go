@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	_ "time/tzdata"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"

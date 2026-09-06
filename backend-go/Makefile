@@ -2,6 +2,7 @@
 
 # 同步前端构建产物到静态目录（供 go:embed）
 sync:
+	rm -rf internal/web/static
 	mkdir -p internal/web/static
 	cp -r ../frontend/dist/* internal/web/static/
 

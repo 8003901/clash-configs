@@ -76,13 +76,13 @@ backend-go/
 - UUID 存 string，时间存 `time.Time`（序列化为 RFC3339 字符串，对齐 Spring 的 `Date` ISO-8601 输出）。
 - `updateSchedule` 存字符串常量 `DAY` / `WEEK`。
 
-### 迁移方案（一次性、幂等）
+### 迁移方案（一次性）
 
 H2 的 `.mv.db` 是私有 MVStore 格式，Go 无成熟读取器。方案：
 
 1. `cmd/migrate` 内部调用 H2 自带工具（`org.h2.tools.Script` 或 `CSVWRITE`，需 JDK 与 h2 jar，可从 Gradle 缓存或下载）把 4 张表 dump 成 SQL/CSV。
 2. Go 命令把 dump 结果导入 SQLite（新建 `data/demo.db`）。
-3. 幂等：已存在数据则跳过；提供 `--force` 覆盖。
+3. 一次性迁移：目标库已存在数据时重跑会安全失败（主键冲突）；提供 `--force` 覆盖目标库。
 4. bcrypt 哈希原样迁移，`user.password` 直接可用。
 
 ## API 与认证契约（逐条对齐）

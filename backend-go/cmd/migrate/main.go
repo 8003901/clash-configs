@@ -26,7 +26,14 @@ import (
 func main() {
 	dumpDir := flag.String("dump", "dump", "H2 dump 输出目录（含 4 个 CSV）")
 	dbPath := flag.String("out", "data/demo.db", "SQLite 目标路径")
+	force := flag.Bool("force", false, "overwrite the target SQLite DB before import")
 	flag.Parse()
+
+	if *force {
+		if err := os.Remove(*dbPath); err != nil && !os.IsNotExist(err) {
+			log.Fatalf("remove target db: %v", err)
+		}
+	}
 
 	if dir := filepath.Dir(*dbPath); dir != "." && dir != "" {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
