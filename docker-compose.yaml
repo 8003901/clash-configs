@@ -2,16 +2,17 @@ services:
   clash-configs:
     image: clash-configs:0.0.1-SNAPSHOT
     build:
-      context: .
+      context: ./backend-go
       dockerfile: Dockerfile
     ports:
       - "8780:8780"
     volumes:
-      - ./backend/data:/data
+      - ./backend-go/data:/data
     container_name: clash-configs
     restart: always
     environment:
       SERVER_PORT: "8780"
+      DB_PATH: "/data/demo.db"
       TZ: Asia/Shanghai
     cpus: "1"
     mem_limit: 512M
