@@ -8,8 +8,10 @@ COPY . .
 # 该镜像自带 native-image + gcc；显式指向 GRAALVM_HOME，绕过 toolchain 检测的不确定性。
 # 只构建后端 native 镜像，避免触发前端 Node 下载（前端产物已提交在 backend/src/main/resources/static）。
 # 直接调用 gradle-wrapper.jar 而非 gradlew 脚本：该 OL 镜像未预装 xargs，而 gradlew 脚本会强制校验 xargs。
+# -XX:-UseJVMCICompiler：GraalVM CE 17.0.9 的 JIT(JVMCI) 会偶发 SIGSEGV，让 wrapper JVM 改用标准 C2 JIT；
+# native-image 的 AOT 编译走独立进程，不受此开关影响。
 ENV GRAALVM_HOME=$JAVA_HOME
-RUN --mount=type=cache,target=/root/.gradle $JAVA_HOME/bin/java -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain :backend:nativeCompile --no-daemon
+RUN --mount=type=cache,target=/root/.gradle $JAVA_HOME/bin/java -XX:-UseJVMCICompiler -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain :backend:nativeCompile --no-daemon
 
 # 阶段2：运行阶段，轻量级 glibc 运行时镜像（native 镜像需与构建端同为 glibc）。
 # 走华为云 SWR 镜像，与仓库里既有 openjdk 镜像同一命名空间（Docker Hub 直连在此网络环境不可用）
