@@ -89,3 +89,20 @@ func TestUpdateNonExistentReturnsNotFound(t *testing.T) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestFetchRemoteNon2xx(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("oops"))
+	}))
+	defer ts.Close()
+
+	db, _ := gorm.Open(sqlite.Open(filepath.Join(t.TempDir(), "t.db")), &gorm.Config{})
+	s := store.New(db)
+	_ = s.Migrate()
+	svc := service.NewClashConfigService(s)
+
+	if _, err := svc.Save(&model.ClashConfig{URL: ts.URL, Name: "bad", Enabled: true, UpdateSchedule: "DAY"}); err == nil {
+		t.Fatal("expected error for non-2xx response")
+	}
+}
