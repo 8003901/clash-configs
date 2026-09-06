@@ -1,8 +1,7 @@
 services:
   clash-configs:
     image: clash-configs:0.0.1-SNAPSHOT-native
-    # native 镜像与架构强绑定；仓库现有华为 SWR 基础镜像（debian/openjdk）均为 amd64，
-    # 故这里固定为 amd64（arm64 机器上会走 Rosetta 模拟，与既有 JVM 镜像行为一致）
+    # native 镜像与架构强绑定，目标部署为 linux x86_64
     platform: linux/amd64
     build:
       context: .
