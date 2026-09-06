@@ -11,6 +11,7 @@ COPY . .
 # -XX:-UseJVMCICompiler：GraalVM CE 17.0.9 的 JIT(JVMCI) 会偶发 SIGSEGV，让 wrapper JVM 改用标准 C2 JIT；
 # native-image 的 AOT 编译走独立进程，不受此开关影响。
 ENV GRAALVM_HOME=$JAVA_HOME
+ENV JAVA_TOOL_OPTIONS=-XX:-UseJVMCICompiler
 RUN --mount=type=cache,target=/root/.gradle $JAVA_HOME/bin/java -XX:-UseJVMCICompiler -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain :backend:nativeCompile --no-daemon
 
 # 阶段2：运行阶段，轻量级 glibc 运行时镜像（native 镜像需与构建端同为 glibc）。
