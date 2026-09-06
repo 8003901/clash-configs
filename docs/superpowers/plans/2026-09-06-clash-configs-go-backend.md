@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Go 模块路径：`github.com/8003901/clash-configs/backend-go`；Go 版本 `1.24`。
+- Go 模块路径：`github.com/8003901/clash-configs/backend-go`；Go 版本 `1.26`（`golang.org/x/crypto` 最新版要求 ≥1.26，构建时自动解析到 1.26）。
 - 编译目标 `CGO_ENABLED=0`（纯静态二进制，无 C 依赖）。
 - JSON 字段名一律 camelCase：`updateSchedule`、`subscriptionUserinfo`、`createdAt`、`updatedAt`、`configs`。
 - 时间序列化为 RFC3339 字符串（`time.Time` 的默认 JSON 编码），字段非空（GORM 自动维护 `CreatedAt`/`UpdatedAt`）。
@@ -2833,7 +2833,7 @@ migrate: sync
 
 ```dockerfile
 # 阶段1：构建
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26-alpine AS builder
 WORKDIR /app
 # 先复制依赖清单以利用层缓存
 COPY go.mod go.sum ./
