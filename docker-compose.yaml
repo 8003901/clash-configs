@@ -7,7 +7,7 @@ services:
     ports:
       - "8780:8780"
     volumes:
-      - ./backend-go/data:/data
+      - ./data:/data
     container_name: clash-configs
     restart: always
     environment:
