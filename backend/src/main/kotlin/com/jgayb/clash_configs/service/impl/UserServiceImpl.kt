@@ -40,7 +40,7 @@ class UserServiceImpl(
             )
         }
         if (environment.getProperty("pwdInit", "false") == "true") {
-            user.password = passwordEncoder.encode("password")
+            user?.password = passwordEncoder.encode("password")
             userRepository.save(user)
         }
     }
