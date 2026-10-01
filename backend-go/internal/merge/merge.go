@@ -36,6 +36,21 @@ var specialGroups = map[string]bool{
 	"DIRECT": true, "REJECT": true, "REJECT-DROP": true, "REJECT-INT": true, "MATCH": true,
 }
 
+// 机场会把真实节点的定义复制几份、把 name 换成套餐信息（剩余流量：xxx、套餐到期：xxx…），
+// 在客户端里冒充成一个节点。这些“信息节点”不是线路，按名字前缀识别后整条丢弃。
+var infoNodePrefixes = []string{
+	"剩余流量", "套餐到期", "过期时间", "到期时间", "距离下次重置", "官网", "订阅",
+}
+
+func isInfoNode(name string) bool {
+	for _, p := range infoNodePrefixes {
+		if strings.HasPrefix(name, p) {
+			return true
+		}
+	}
+	return false
+}
+
 func Merge(template string, configs []Source) (*Result, error) {
 	var tree map[string]any
 	if err := json.Unmarshal([]byte(template), &tree); err != nil {
@@ -54,13 +69,37 @@ func Merge(template string, configs []Source) (*Result, error) {
 	}
 
 	proxies := getArray(tree, "proxies")
+	seen := make(map[string]bool, len(proxies))
+	for _, p := range proxies {
+		if m, ok := p.(map[string]any); ok {
+			if n, ok := m["name"].(string); ok {
+				seen[n] = true
+			}
+		}
+	}
 	for _, c := range included {
 		var sub map[string]any
 		if err := yaml.Unmarshal([]byte(c.Content), &sub); err != nil {
 			continue
 		}
-		if sp, ok := sub["proxies"].([]any); ok {
-			proxies = append(proxies, sp...)
+		sp, _ := sub["proxies"].([]any)
+		for _, p := range sp {
+			m, ok := p.(map[string]any)
+			if !ok {
+				continue
+			}
+			n, _ := m["name"].(string)
+			if isInfoNode(n) {
+				continue
+			}
+			// mihomo 遇到重名 proxy 会拒绝加载整个配置，所以同名只保留先出现的那个。
+			if n != "" {
+				if seen[n] {
+					continue
+				}
+				seen[n] = true
+			}
+			proxies = append(proxies, p)
 		}
 	}
 	tree["proxies"] = proxies

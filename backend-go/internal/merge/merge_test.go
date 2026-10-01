@@ -139,3 +139,145 @@ func TestHeaderValue(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 }
+
+// 两个机场的真实线路会撞名，mihomo 遇到重名 proxy 会拒绝加载整个配置，
+// 所以合并时必须按名字去重。
+const subDupA = `proxies:
+  - name: "香港01"
+    type: ss
+    server: a.example.com
+    port: 443
+  - name: "US-01"
+    type: ss
+    server: 1.1.1.1
+    port: 443
+`
+
+const subDupB = `proxies:
+  - name: "香港01"
+    type: ss
+    server: b.example.com
+    port: 443
+  - name: "US-02"
+    type: vmess
+    server: 3.3.3.3
+    port: 8443
+`
+
+func TestMergeDeduplicatesProxyNames(t *testing.T) {
+	res, err := merge.Merge(tmpl, []merge.Source{{Content: subDupA}, {Content: subDupB}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out map[string]any
+	if err := yaml.Unmarshal([]byte(res.YAML), &out); err != nil {
+		t.Fatalf("parse output yaml: %v", err)
+	}
+
+	proxies, _ := out["proxies"].([]any)
+	seen := map[string]int{}
+	var keptServer string
+	for _, p := range proxies {
+		pm, _ := p.(map[string]any)
+		n, _ := pm["name"].(string)
+		seen[n]++
+		if n == "香港01" {
+			keptServer, _ = pm["server"].(string)
+		}
+	}
+	if seen["香港01"] != 1 {
+		t.Fatalf("重复节点名应只保留一份，实际 %d 份:\n%s", seen["香港01"], res.YAML)
+	}
+	if keptServer != "a.example.com" {
+		t.Fatalf("应保留先出现的那个节点，实际 server=%q", keptServer)
+	}
+	for _, want := range []string{"US-01", "US-02"} {
+		if seen[want] != 1 {
+			t.Fatalf("非重复节点 %q 不应丢，实际 %d 份", want, seen[want])
+		}
+	}
+
+	// 组的 proxies 列表里也不能出现重复名字
+	groups, _ := out["proxy-groups"].([]any)
+	for _, g := range groups {
+		gm, _ := g.(map[string]any)
+		gn, _ := gm["name"].(string)
+		names := stringSlice(gm["proxies"].([]any))
+		got := map[string]int{}
+		for _, n := range names {
+			got[n]++
+		}
+		for n, c := range got {
+			if c > 1 {
+				t.Fatalf("组 %q 的 proxies 里 %q 重复 %d 次: %v", gn, n, c, names)
+			}
+		}
+	}
+}
+
+// 机场会把真实节点的定义复制几份、把 name 改成套餐信息（剩余流量/套餐到期/官网…），
+// 在客户端里冒充成一个节点。这些“信息节点”不是线路，应当整条丢弃。
+const subInfo = `proxies:
+  - name: "剩余流量：1024 GB"
+    type: vless
+    server: jp.example.com
+    port: 443
+    uuid: 22962a38-b2ea-46b4-8d3a-65f7161c94c5
+  - name: "套餐到期：长期有效"
+    type: vless
+    server: jp.example.com
+    port: 443
+    uuid: 22962a38-b2ea-46b4-8d3a-65f7161c94c5
+  - name: "官网：example.com"
+    type: vless
+    server: jp.example.com
+    port: 443
+    uuid: 22962a38-b2ea-46b4-8d3a-65f7161c94c5
+  - name: "订阅到期：2026-12-31"
+    type: vless
+    server: jp.example.com
+    port: 443
+    uuid: 22962a38-b2ea-46b4-8d3a-65f7161c94c5
+  - name: "\U0001F1EF\U0001F1F5日本高速01|CTCU|0.5x"
+    type: vless
+    server: jp.example.com
+    port: 443
+    uuid: 22962a38-b2ea-46b4-8d3a-65f7161c94c5
+`
+
+func TestMergeDropsInfoNodes(t *testing.T) {
+	res, err := merge.Merge(tmpl, []merge.Source{{Content: subInfo}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out map[string]any
+	if err := yaml.Unmarshal([]byte(res.YAML), &out); err != nil {
+		t.Fatalf("parse output yaml: %v", err)
+	}
+
+	proxies, _ := out["proxies"].([]any)
+	var names []string
+	for _, p := range proxies {
+		pm, _ := p.(map[string]any)
+		n, _ := pm["name"].(string)
+		names = append(names, n)
+	}
+	if len(names) != 1 {
+		t.Fatalf("信息节点应全部丢弃，只剩 1 个真实节点，实际 %d 个: %v", len(names), names)
+	}
+	if names[0] != "🇯🇵日本高速01|CTCU|0.5x" {
+		t.Fatalf("留下的应是真实节点，实际 %q", names[0])
+	}
+
+	// 组里不能再引用被丢掉的那几个信息节点
+	dropped := []string{"剩余流量：1024 GB", "套餐到期：长期有效", "官网：example.com", "订阅到期：2026-12-31"}
+	groups, _ := out["proxy-groups"].([]any)
+	for _, g := range groups {
+		gm, _ := g.(map[string]any)
+		for _, n := range stringSlice(gm["proxies"].([]any)) {
+			if contains(dropped, n) {
+				t.Fatalf("组 %v 仍引用了已丢弃的信息节点 %q", gm["name"], n)
+			}
+		}
+	}
+}
