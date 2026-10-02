@@ -140,31 +140,12 @@ func TestHeaderValue(t *testing.T) {
 	}
 }
 
-// 两个机场的真实线路会撞名，mihomo 遇到重名 proxy 会拒绝加载整个配置，
-// 所以合并时必须按名字去重。
-const subDupA = `proxies:
-  - name: "香港01"
-    type: ss
-    server: a.example.com
-    port: 443
-  - name: "US-01"
-    type: ss
-    server: 1.1.1.1
-    port: 443
-`
+// 两个机场的真实线路会撞名；合并后保留线路并生成唯一名称，避免 mihomo 拒绝配置。
+const subDupA = `{"proxies":[{"name":"香港01","type":"ss","server":"a.example.com","port":443},{"name":"US-01","type":"ss","server":"1.1.1.1","port":443},{"name":"香港01 (2)","type":"ss","server":"alias.example.com","port":443}]}`
 
-const subDupB = `proxies:
-  - name: "香港01"
-    type: ss
-    server: b.example.com
-    port: 443
-  - name: "US-02"
-    type: vmess
-    server: 3.3.3.3
-    port: 8443
-`
+const subDupB = `{"proxies":[{"name":"香港01","type":"ss","server":"b.example.com","port":443},{"name":"US-02","type":"vmess","server":"3.3.3.3","port":8443},{"name":"香港01 (2)","type":"ss","server":"alias.example.com","port":443}]}`
 
-func TestMergeDeduplicatesProxyNames(t *testing.T) {
+func TestMergePreservesDuplicateProxyNames(t *testing.T) {
 	res, err := merge.Merge(tmpl, []merge.Source{{Content: subDupA}, {Content: subDupB}})
 	if err != nil {
 		t.Fatal(err)
@@ -175,26 +156,25 @@ func TestMergeDeduplicatesProxyNames(t *testing.T) {
 	}
 
 	proxies, _ := out["proxies"].([]any)
-	seen := map[string]int{}
-	var keptServer string
+	servers := map[string]string{}
 	for _, p := range proxies {
 		pm, _ := p.(map[string]any)
 		n, _ := pm["name"].(string)
-		seen[n]++
-		if n == "香港01" {
-			keptServer, _ = pm["server"].(string)
+		servers[n], _ = pm["server"].(string)
+	}
+	for name, wantServer := range map[string]string{
+		"香港01":     "a.example.com",
+		"香港01 (2)": "alias.example.com",
+		"香港01 (3)": "b.example.com",
+		"US-01":    "1.1.1.1",
+		"US-02":    "3.3.3.3",
+	} {
+		if got := servers[name]; got != wantServer {
+			t.Fatalf("proxy %q server = %q, want %q; all servers: %v", name, got, wantServer, servers)
 		}
 	}
-	if seen["香港01"] != 1 {
-		t.Fatalf("重复节点名应只保留一份，实际 %d 份:\n%s", seen["香港01"], res.YAML)
-	}
-	if keptServer != "a.example.com" {
-		t.Fatalf("应保留先出现的那个节点，实际 server=%q", keptServer)
-	}
-	for _, want := range []string{"US-01", "US-02"} {
-		if seen[want] != 1 {
-			t.Fatalf("非重复节点 %q 不应丢，实际 %d 份", want, seen[want])
-		}
+	if len(servers) != 5 {
+		t.Fatalf("应保留全部 5 条线路，实际 %d 条: %v", len(servers), servers)
 	}
 
 	// 组的 proxies 列表里也不能出现重复名字

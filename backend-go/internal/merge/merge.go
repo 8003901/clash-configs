@@ -70,10 +70,14 @@ func Merge(template string, configs []Source) (*Result, error) {
 
 	proxies := getArray(tree, "proxies")
 	seen := make(map[string]bool, len(proxies))
+	seenDefinitions := make(map[string]bool, len(proxies))
 	for _, p := range proxies {
 		if m, ok := p.(map[string]any); ok {
 			if n, ok := m["name"].(string); ok {
 				seen[n] = true
+			}
+			if fingerprint, ok := proxyFingerprint(m); ok {
+				seenDefinitions[fingerprint] = true
 			}
 		}
 	}
@@ -92,12 +96,17 @@ func Merge(template string, configs []Source) (*Result, error) {
 			if isInfoNode(n) {
 				continue
 			}
-			// mihomo 遇到重名 proxy 会拒绝加载整个配置，所以同名只保留先出现的那个。
+			fingerprint, fingerprintOK := proxyFingerprint(m)
+			if fingerprintOK && seenDefinitions[fingerprint] {
+				continue
+			}
+			if fingerprintOK {
+				seenDefinitions[fingerprint] = true
+			}
 			if n != "" {
-				if seen[n] {
-					continue
-				}
-				seen[n] = true
+				uniqueName := uniqueProxyName(n, seen)
+				m["name"] = uniqueName
+				seen[uniqueName] = true
 			}
 			proxies = append(proxies, p)
 		}
@@ -164,6 +173,26 @@ func getArray(m map[string]any, key string) []any {
 	a := []any{}
 	m[key] = a
 	return a
+}
+
+func uniqueProxyName(name string, seen map[string]bool) string {
+	if !seen[name] {
+		return name
+	}
+	for suffix := 2; ; suffix++ {
+		candidate := fmt.Sprintf("%s (%d)", name, suffix)
+		if !seen[candidate] {
+			return candidate
+		}
+	}
+}
+
+func proxyFingerprint(proxy map[string]any) (string, bool) {
+	encoded, err := json.Marshal(proxy)
+	if err != nil {
+		return "", false
+	}
+	return string(encoded), true
 }
 
 func addProxies(group map[string]any, names []any) {
