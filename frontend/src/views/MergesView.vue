@@ -32,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { BACKEND_URL } from '@/lib/config'
 import { formatDateTime } from '@/lib/format'
 import type { ClashConfig, ClashConfigsMerge } from '@/types'
 
@@ -163,7 +162,7 @@ async function copyText(text: string, message = '已复制') {
 }
 
 function subscriptionUrl(token: string) {
-  return `${BACKEND_URL}/configs?token=${token}`
+  return `${window.location.origin}/configs?token=${token}`
 }
 
 onMounted(load)

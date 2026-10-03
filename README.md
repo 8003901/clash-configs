@@ -126,7 +126,7 @@ The Go backend is configured entirely via environment variables:
 | `pwdInit` | `false` | When `true`, resets the admin password to the default on startup |
 | `TZ` | (system) | Timezone (Compose sets `Asia/Shanghai`) |
 
-The frontend reads `VITE_BACKEND_URL` to build the public subscription link (`/configs?token=…`); set it to your deployment domain in production.
+The frontend builds public subscription links (`/configs?token=…`) from the current page's protocol and domain, so the page and subscription endpoint should share a domain.
 
 ## API reference
 
