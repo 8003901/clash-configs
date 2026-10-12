@@ -285,7 +285,7 @@ onMounted(load)
           </div>
           <div class="flex items-center justify-between">
             <Label for="cfg-enabled">启用</Label>
-            <Switch id="cfg-enabled" v-model:checked="form.enabled" />
+            <Switch id="cfg-enabled" v-model="form.enabled" />
           </div>
         </div>
         <DialogFooter>

@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
+import { Plus } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { createUser, listUsers, type UserSummary } from '@/api/user'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -20,6 +29,7 @@ const users = ref<UserSummary[]>([])
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const createOpen = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 
@@ -54,6 +64,7 @@ async function handleSubmit() {
   try {
     await createUser(normalizedUsername, password.value)
     toast.success('账户已创建')
+    createOpen.value = false
     username.value = ''
     password.value = ''
     confirmPassword.value = ''
@@ -74,52 +85,17 @@ onMounted(loadUsers)
 <template>
   <div class="space-y-4">
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight">账户管理</h1>
-      <p class="text-sm text-muted-foreground">仅管理员可创建账户；所有账户拥有相同的配置管理权限</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight">账户管理</h1>
+          <p class="text-sm text-muted-foreground">仅管理员可创建账户；所有账户拥有相同的配置管理权限</p>
+        </div>
+        <Button @click="createOpen = true">
+          <Plus class="size-4" />
+          创建账户
+        </Button>
+      </div>
     </div>
-
-    <Card class="max-w-lg">
-      <CardHeader>
-        <CardTitle>创建账户</CardTitle>
-        <CardDescription>请将初始密码安全地告知新用户，并提醒其登录后修改密码</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form class="space-y-4" @submit.prevent="handleSubmit">
-          <div class="space-y-2">
-            <Label for="new-username">用户名</Label>
-            <Input
-              id="new-username"
-              v-model="username"
-              autocomplete="off"
-              required
-            />
-          </div>
-          <div class="space-y-2">
-            <Label for="new-user-password">初始密码</Label>
-            <Input
-              id="new-user-password"
-              v-model="password"
-              type="password"
-              autocomplete="new-password"
-              required
-            />
-          </div>
-          <div class="space-y-2">
-            <Label for="confirm-user-password">确认初始密码</Label>
-            <Input
-              id="confirm-user-password"
-              v-model="confirmPassword"
-              type="password"
-              autocomplete="new-password"
-              required
-            />
-          </div>
-          <Button type="submit" :disabled="saving">
-            {{ saving ? '创建中…' : '创建账户' }}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
 
     <Card>
       <CardHeader>
@@ -150,5 +126,48 @@ onMounted(loadUsers)
         </Table>
       </CardContent>
     </Card>
+
+    <Dialog v-model:open="createOpen">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>创建账户</DialogTitle>
+          <DialogDescription>请将初始密码安全地告知新用户，并提醒其登录后修改密码</DialogDescription>
+        </DialogHeader>
+        <form class="space-y-4 py-2" @submit.prevent="handleSubmit">
+          <div class="space-y-2">
+            <Label for="new-username">用户名</Label>
+            <Input id="new-username" v-model="username" autocomplete="off" required />
+          </div>
+          <div class="space-y-2">
+            <Label for="new-user-password">初始密码</Label>
+            <Input
+              id="new-user-password"
+              v-model="password"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+          <div class="space-y-2">
+            <Label for="confirm-user-password">确认初始密码</Label>
+            <Input
+              id="confirm-user-password"
+              v-model="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" :disabled="saving" @click="createOpen = false">
+              取消
+            </Button>
+            <Button type="submit" :disabled="saving">
+              {{ saving ? '创建中…' : '创建账户' }}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
