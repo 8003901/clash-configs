@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 用法: ./scripts/h2-dump.sh <h2-jar路径> <demo.mv.db所在目录> <输出目录>
-# 例: ./scripts/h2-dump.sh ~/.gradle/.../h2-2.x.jar ../backend/data ./dump
+# 例: ./scripts/h2-dump.sh /path/to/h2-2.x.jar /path/to/h2-data ./dump
 set -euo pipefail
 
 H2_JAR="$1"

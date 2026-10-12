@@ -72,6 +72,72 @@ func (h *Handler) changePassword(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+func (h *Handler) currentUser(c *gin.Context) {
+	username, ok := h.currentUsername(c)
+	if !ok {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"username": username, "isAdmin": username == "admin"})
+}
+
+func (h *Handler) listUsers(c *gin.Context) {
+	if !h.requireAdmin(c) {
+		return
+	}
+	users, err := h.us.List()
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	response := make([]gin.H, 0, len(users))
+	for _, user := range users {
+		response = append(response, gin.H{"id": user.ID, "username": user.Username})
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *Handler) createUser(c *gin.Context) {
+	if !h.requireAdmin(c) {
+		return
+	}
+	var req struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	user, err := h.us.Create(req.Username, req.Password)
+	if err != nil {
+		if errors.Is(err, service.ErrInvalidUser) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "用户名须为 3–32 个字符，密码须为 8–72 字节"})
+			return
+		}
+		if errors.Is(err, service.ErrUsernameExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": "用户名已存在"})
+			return
+		}
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"id": user.ID, "username": user.Username})
+}
+
+func (h *Handler) requireAdmin(c *gin.Context) bool {
+	username, ok := h.currentUsername(c)
+	if !ok {
+		c.Status(http.StatusUnauthorized)
+		return false
+	}
+	if username != "admin" {
+		c.Status(http.StatusForbidden)
+		return false
+	}
+	return true
+}
+
 func (h *Handler) currentUsername(c *gin.Context) (string, bool) {
 	id, err := c.Cookie(sessionCookie)
 	if err != nil {
@@ -214,6 +280,18 @@ func (h *Handler) detailMerge(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, m)
+}
+
+func (h *Handler) deleteMerge(c *gin.Context) {
+	if err := h.ms.Delete(c.Param("id")); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	c.Status(http.StatusOK)
 }
 
 type mergeUpdate struct {

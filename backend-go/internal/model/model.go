@@ -26,6 +26,6 @@ type ClashConfigsMerge struct {
 
 type User struct {
 	ID       string `gorm:"primaryKey;size:36" json:"id"`
-	Username string `json:"username"`
+	Username string `gorm:"uniqueIndex" json:"username"`
 	Password string `json:"password"`
 }

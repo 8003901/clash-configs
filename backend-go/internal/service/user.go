@@ -2,15 +2,22 @@ package service
 
 import (
 	"errors"
+	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 
 	"github.com/8003901/clash-configs/backend-go/internal/model"
 	"github.com/8003901/clash-configs/backend-go/internal/store"
 	"github.com/google/uuid"
 )
 
-var ErrBadOldPassword = errors.New("旧密码错误")
+var (
+	ErrBadOldPassword = errors.New("旧密码错误")
+	ErrInvalidUser    = errors.New("用户名或密码格式无效")
+	ErrUsernameExists = errors.New("用户名已存在")
+)
 
 type UserService struct {
 	store *store.Store
@@ -41,6 +48,32 @@ func (s *UserService) Authenticate(username, password string) bool {
 		return false
 	}
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)) == nil
+}
+
+func (s *UserService) List() ([]model.User, error) {
+	return s.store.ListUsers()
+}
+
+func (s *UserService) Create(username, password string) (*model.User, error) {
+	username = strings.TrimSpace(username)
+	if utf8.RuneCountInString(username) < 3 || utf8.RuneCountInString(username) > 32 ||
+		len(password) < 8 || len(password) > 72 {
+		return nil, ErrInvalidUser
+	}
+	if _, err := s.store.FindUserByUsername(username); err == nil {
+		return nil, ErrUsernameExists
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	u := &model.User{ID: uuid.NewString(), Username: username, Password: string(hash)}
+	if err := s.store.CreateUser(u); err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
 func (s *UserService) ChangePwd(username, newPwd, oldPwd string) error {

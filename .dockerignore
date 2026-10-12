@@ -6,6 +6,7 @@
 frontend/dist/
 frontend/dist-ssr/
 backend/data/
+backend-go/internal/web/static/
 docs/
 .vscode/
 .claude/

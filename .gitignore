@@ -8,7 +8,7 @@
 *.ipr
 *.iws
 data/
-# Gradle
+# Generated build output and caches
 .gradle/
 build/
 

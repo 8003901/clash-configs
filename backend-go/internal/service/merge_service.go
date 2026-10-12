@@ -92,6 +92,13 @@ func (s *MergeService) List() ([]model.ClashConfigsMerge, error) {
 	return s.store.ListMerges()
 }
 
+func (s *MergeService) Delete(id string) error {
+	if _, err := s.Detail(id); err != nil {
+		return err
+	}
+	return s.store.DeleteMerge(id)
+}
+
 func (s *MergeService) RefreshToken(id string) (*model.ClashConfigsMerge, error) {
 	m, err := s.store.FindMerge(id)
 	if err != nil {

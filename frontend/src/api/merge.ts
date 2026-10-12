@@ -25,6 +25,10 @@ export async function updateMerge(id: string, payload: ClashConfigsMergeUpdate):
   return data
 }
 
+export async function deleteMerge(id: string): Promise<void> {
+  await http.delete(`/clash_configs_merge/${id}`)
+}
+
 export async function refreshMergeToken(id: string): Promise<ClashConfigsMerge> {
   const { data } = await http.put<ClashConfigsMerge>(`/clash_configs_merge/${id}/token`)
   return data

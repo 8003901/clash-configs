@@ -69,3 +69,33 @@ func TestChangePwdRejectsWrongOld(t *testing.T) {
 		t.Fatal("bcrypt roundtrip sanity check failed")
 	}
 }
+
+func TestCreateUserValidationAndDuplicate(t *testing.T) {
+	u := newUserService(t)
+	if err := u.EnsureAdmin(false); err != nil {
+		t.Fatal(err)
+	}
+
+	created, err := u.Create("  alice  ", "secure-pass")
+	if err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+	if created.Username != "alice" || !u.Authenticate("alice", "secure-pass") {
+		t.Fatalf("created account did not authenticate: %+v", created)
+	}
+	if _, err := u.Create("alice", "another-pass"); err != service.ErrUsernameExists {
+		t.Fatalf("expected ErrUsernameExists, got %v", err)
+	}
+	for _, tc := range []struct {
+		username string
+		password string
+	}{
+		{"ab", "secure-pass"},
+		{"valid-name", "short"},
+		{"valid-name", string(make([]byte, 73))},
+	} {
+		if _, err := u.Create(tc.username, tc.password); err != service.ErrInvalidUser {
+			t.Fatalf("expected ErrInvalidUser for username=%q password length=%d, got %v", tc.username, len(tc.password), err)
+		}
+	}
+}

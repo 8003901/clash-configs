@@ -1,10 +1,10 @@
 # clash-configs-web
 
-`clash-configs` 后端（Kotlin + Spring Boot）的前端管理界面，基于 **Vite + Vue 3 + TypeScript + shadcn-vue + Tailwind CSS**。
+`clash-configs` Go 后端的前端管理界面，基于 **Vite + Vue 3 + TypeScript + shadcn-vue + Tailwind CSS**。
 
 ## 功能
 
-- 登录（Spring Security 表单登录 + session cookie）
+- 登录（session cookie）
 - 仪表盘：订阅流量用量汇总（上传 / 下载 / 总量 / 到期时间）
 - 订阅配置管理：增删改查、手动更新、启用开关、更新周期（每天 / 每周）
 - 合并配置管理：创建、编辑、刷新 Token、复制订阅链接
@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-开发服务器运行在 `http://localhost:5173`，通过 Vite 代理把 `/api/*` 转发到后端 `http://localhost:8080`（去掉 `/api` 前缀）。
+开发服务器运行在 `http://localhost:5173`，通过 Vite 代理把 `/api/*` 转发到 Go 后端（默认 `https://config.jijuzhilian.com`，可用 `PROXY_TARGET` 覆盖；去掉 `/api` 前缀）。
 
 后端默认账号：`admin` / `password`。
 
@@ -67,15 +67,4 @@ server {
 
 生成的订阅链接使用当前页面的协议和域名，因此部署时页面域名应与对外订阅服务域名一致。
 
-## 后端改动说明
-
-后端原有接口没有「合并配置列表」接口，前端合并配置列表页依赖它，因此给后端补充了 **一个** 接口：
-
-- `GET /clash_configs_merge` —— 返回所有合并配置（REST 风格：列表用资源根路径）
-
-对应改动：`ClashConfigsMergeService` / `ClashConfigsMergeServiceImpl` 增加 `list()`，`ClashConfigsMergeController` 增加 `@GetMapping`。
-
-## 已知后端行为
-
-- `GET /clash_configs` 只返回 `enabled = true` 的订阅，停用后将从列表消失（后端 `Example.of(ClashConfig(enabled = true))` 过滤所致）。
-- 合并配置后端未提供删除接口。
+Go 后端 API 的详细列表见项目根目录 [README](../README.md#api-reference)。

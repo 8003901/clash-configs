@@ -98,7 +98,23 @@ func (s *Store) FindMergeByToken(token string) (*model.ClashConfigsMerge, error)
 	return &m, nil
 }
 
+func (s *Store) DeleteMerge(id string) error {
+	return s.DB.Transaction(func(tx *gorm.DB) error {
+		m := &model.ClashConfigsMerge{ID: id}
+		if err := tx.Model(m).Association("Configs").Clear(); err != nil {
+			return err
+		}
+		return tx.Delete(&model.ClashConfigsMerge{}, "id = ?", id).Error
+	})
+}
+
 // --- User ---
+
+func (s *Store) ListUsers() ([]model.User, error) {
+	var users []model.User
+	err := s.DB.Select("id", "username").Order("username ASC").Find(&users).Error
+	return users, err
+}
 
 func (s *Store) FindUserByUsername(username string) (*model.User, error) {
 	var u model.User
@@ -107,5 +123,7 @@ func (s *Store) FindUserByUsername(username string) (*model.User, error) {
 	}
 	return &u, nil
 }
+
+func (s *Store) CreateUser(u *model.User) error { return s.DB.Create(u).Error }
 
 func (s *Store) SaveUser(u *model.User) error { return s.DB.Save(u).Error }

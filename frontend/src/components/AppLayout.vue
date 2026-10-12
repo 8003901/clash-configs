@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { GitMerge, KeyRound, LayoutDashboard, LogOut, Menu, Moon, Radio, Sun } from '@lucide/vue'
+import { onMounted, ref } from 'vue'
+import { GitMerge, KeyRound, LayoutDashboard, LogOut, Menu, Moon, Radio, Sun, Users } from '@lucide/vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { getCurrentUser } from '@/api/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,13 +21,23 @@ const auth = useAuth()
 const { isDark, toggle } = useTheme()
 
 const expanded = ref(false)
+const isAdmin = ref(false)
 
 const navItems = [
   { name: 'dashboard', label: '仪表盘', icon: LayoutDashboard },
   { name: 'configs', label: '订阅配置', icon: Radio },
   { name: 'merges', label: '合并配置', icon: GitMerge },
   { name: 'password', label: '修改密码', icon: KeyRound },
+  { name: 'users', label: '账户管理', icon: Users },
 ]
+
+onMounted(async () => {
+  try {
+    isAdmin.value = (await getCurrentUser()).isAdmin
+  } catch {
+    isAdmin.value = false
+  }
+})
 
 async function handleLogout() {
   await auth.logout()
@@ -53,7 +64,7 @@ async function handleLogout() {
 
       <nav class="flex-1 space-y-1 p-2">
         <RouterLink
-          v-for="item in navItems"
+          v-for="item in navItems.filter((item) => item.name !== 'users' || isAdmin)"
           :key="item.name"
           :to="{ name: item.name }"
           :title="item.label"
@@ -113,7 +124,7 @@ async function handleLogout() {
             <DropdownMenuContent align="end" class="w-48">
               <DropdownMenuLabel>导航</DropdownMenuLabel>
               <DropdownMenuItem
-                v-for="item in navItems"
+                v-for="item in navItems.filter((item) => item.name !== 'users' || isAdmin)"
                 :key="item.name"
                 @click="router.push({ name: item.name })"
               >

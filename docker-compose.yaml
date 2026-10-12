@@ -2,7 +2,7 @@ services:
   clash-configs:
     image: clash-configs:0.0.1-SNAPSHOT
     build:
-      context: ./backend-go
+      context: .
       dockerfile: Dockerfile
     ports:
       - "8780:8780"

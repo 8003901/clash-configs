@@ -21,7 +21,7 @@ A self-hosted **Clash subscription merge & configuration center**. It fetches mu
   - Skips subscriptions whose traffic has exceeded 95% of quota.
   - Emits the final merged config as YAML for Clash.
 - **Dashboard** — aggregate traffic usage (upload / download / total / earliest expiry).
-- **Single-user auth** — `admin` / `password` (bcrypt), with change-password support.
+- **Account auth** — `admin` / `password` is created by default; the admin can create additional accounts, and users can change their own passwords (bcrypt).
 
 ## Architecture
 
@@ -29,9 +29,8 @@ A self-hosted **Clash subscription merge & configuration center**. It fetches mu
 | --- | --- | --- |
 | [`frontend/`](frontend/) | Web admin UI — Vue 3 + Vite + TypeScript + shadcn-vue + Tailwind CSS | active |
 | [`backend-go/`](backend-go/) | Backend — Go + Gin + GORM + SQLite (pure Go, no CGO), single static binary | **active / canonical** |
-| [`backend/`](backend/) | Original backend — Kotlin + Spring Boot 4 + H2 + GraalVM native-image | kept for reference |
 
-The Go backend is a faithful 1:1 rewrite of the Kotlin/Spring Boot backend: the API paths, JSON field names, auth behavior, and merge-engine logic are identical, so the Vue frontend works against either one unchanged. The single static Go binary also embeds the compiled frontend (`go:embed`), replacing the need for a GraalVM native image.
+The Go backend embeds the compiled frontend (`go:embed`) and ships as a single static binary.
 
 ```
 clash-configs/
@@ -49,19 +48,17 @@ clash-configs/
 │       ├── service/     # business logic (config / merge / user)
 │       ├── store/       # GORM data access
 │       └── web/         # Gin routes, handlers, auth middleware, embedded static
-├── backend/             # Kotlin + Spring Boot backend (legacy)
 └── docs/                # design specs & implementation plans
 ```
 
 ## Tech stack
 
 - **Backend (Go):** Go 1.26, [Gin](https://github.com/gin-gonic/gin), [GORM](https://gorm.io/) + [glebarez/sqlite](https://github.com/glebarez/sqlite) (pure-Go SQLite), [robfig/cron](https://github.com/robfig/cron), `golang.org/x/crypto/bcrypt`, `gopkg.in/yaml.v3`.
-- **Backend (Kotlin, legacy):** Kotlin 2.2, Spring Boot 4.0, Hibernate/JPA, H2, Spring Security, GraalVM native-image.
 - **Frontend:** Vue 3, Vite 8, TypeScript, shadcn-vue, Tailwind CSS 4, vue-router, axios, CodeMirror.
 
 ## Quick start (Docker)
 
-The easiest way to run is with Docker Compose, which builds and runs the Go backend (frontend is already embedded):
+The easiest way to run is with Docker Compose. Its multi-stage build first compiles the frontend, copies `frontend/dist` into `backend-go/internal/web/static`, then compiles the Go backend with those assets embedded:
 
 ```bash
 docker compose up -d --build
@@ -77,21 +74,22 @@ docker compose up -d --build
 
 - **Go ≥ 1.26** (backend)
 - **Node.js ≥ 20.19** (frontend; Vite 8 requirement) and npm
-- **JDK 25** (only for the legacy Kotlin backend)
 
 ### Backend (Go)
 
 ```bash
-cd backend-go
+# Install frontend dependencies once
+cd frontend
+npm ci
 
-# 1. Sync the built frontend into the embedded static directory
-make sync           # copies ../frontend/dist → internal/web/static
+# Build the frontend, sync its output into the Go embed directory, and compile the backend
+cd ../backend-go
+make build          # runs npm build, copies ../frontend/dist → internal/web/static, then builds bin/clash-configs
 
-# 2. Build (or run directly)
-make build          # → bin/clash-configs
+# Run directly (also rebuilds and syncs frontend assets)
 make run            # go run ./cmd/server
 
-# 3. Tests
+# Tests
 make test
 ```
 
@@ -106,14 +104,6 @@ npm run dev         # http://localhost:5173
 ```
 
 The Vite dev server proxies `/api/*` to the backend (default target `https://config.jijuzhilian.com`, overridable via `PROXY_TARGET`; see `npm run dev:local` / `dev:remote`).
-
-### Legacy backend (Kotlin + Spring Boot)
-
-```bash
-./gradlew :backend:bootRun
-```
-
-`bootRun` first builds the frontend and syncs it into `backend/src/main/resources/static`, then starts Spring Boot on port `8080`.
 
 ## Configuration
 
@@ -136,7 +126,10 @@ All business APIs require an authenticated session (cookie), except the login/lo
 | --- | --- | --- |
 | `POST /login` | Form login (`username` / `password`), sets session cookie | public |
 | `POST /logout` | Destroy session | public |
+| `GET /users/me` | Get current username and admin flag | required |
 | `PUT /users/me/password` | Change password (`{ oldPassword, newPassword }`) | required |
+| `GET /users` | List accounts | admin |
+| `POST /users` | Create `{ username, password }` (username 3–32 characters; password 8–72 bytes) | admin |
 | `GET /clash_configs` | List subscriptions (all, incl. disabled) | required |
 | `POST /clash_configs` | Create `{ url, name, updateSchedule, enabled }` | required |
 | `GET /clash_configs/{id}` | Get detail; `?renew=true` forces a remote refresh | required |
@@ -145,20 +138,21 @@ All business APIs require an authenticated session (cookie), except the login/lo
 | `GET /clash_configs_merge` | List merges | required |
 | `POST /clash_configs_merge` | Create `{ name, configIds }` | required |
 | `GET /clash_configs_merge/{id}` | Get detail | required |
+| `DELETE /clash_configs_merge/{id}` | Delete merge | required |
 | `PUT /clash_configs_merge/{id}` | Update `{ name, config, configs: [{ id }] }` | required |
 | `PUT /clash_configs_merge/{id}/token` | Refresh merge token | required |
 | `GET /configs?token=…` | Public merged config — returns YAML + `subscription-userinfo` header | public |
 
 JSON fields are `camelCase`; timestamps are RFC3339 strings. `updateSchedule` is `"DAY"` or `"WEEK"`.
 
-## Data migration (H2 → SQLite)
+## Data migration (legacy H2 → SQLite)
 
-The Go backend stores data in SQLite, whereas the legacy Kotlin backend used H2. A one-time migration path is provided:
+The Go backend stores data in SQLite. To migrate a database from an earlier H2 deployment, a one-time migration path is provided (this legacy-data import is the only workflow that requires a JDK and H2 jar):
 
 1. Dump the H2 database to CSV (requires a JDK and the H2 jar):
 
    ```bash
-   backend-go/scripts/h2-dump.sh <h2-jar> backend/data ./dump
+   backend-go/scripts/h2-dump.sh <h2-jar> <h2-data-directory> ./dump
    ```
 
 2. Import the CSVs into SQLite:
@@ -176,7 +170,7 @@ bcrypt password hashes are migrated as-is, so existing logins keep working.
 - Username: `admin`
 - Password: `password`
 
-The admin account is created automatically on first startup if none exists. **Change the password after first login** (Dashboard → 修改密码).
+The admin account is created automatically on first startup if none exists. Log in as `admin`, open **账户管理**, and create accounts for other users. **Change the default password after first login** (修改密码).
 
 ## License
 
@@ -194,8 +188,8 @@ No `LICENSE` file is present in this repository. Assume all rights reserved unle
 - **合并配置**：多对多关联多个订阅，每个合并配置有独立 token，可编辑模板、刷新 token、复制订阅链接。
 - **合并引擎**：基于 `config-template.json` 模板合并各订阅的 `proxies`，做 `filter-key` 关键词过滤、去空组、规则校验、流量头汇总（`subscription-userinfo`），超过 95% 流量的订阅自动跳过，最终输出 Clash 可用的 YAML。
 - **仪表盘**：订阅流量用量汇总（上传 / 下载 / 总量 / 最早到期）。
-- **单用户认证**：默认账号 `admin` / `password`（bcrypt），支持修改密码。
+- **账户认证**：默认账号 `admin` / `password`（bcrypt）；管理员可创建其他账户，所有账户可修改自己的密码。
 
-**目录结构**：`frontend/`（Vue 3 管理界面）、`backend-go/`（Go 后端，当前主力，Gin + GORM + SQLite，单静态二进制并内嵌前端产物）、`backend/`（Kotlin + Spring Boot 4 原版，保留参考）。
+**目录结构**：`frontend/`（Vue 3 管理界面）、`backend-go/`（Go 后端，Gin + GORM + SQLite，单静态二进制并内嵌前端产物）。
 
-**快速开始**：`docker compose up -d --build`，访问 http://localhost:8780（默认账号 `admin` / `password`）。
+**快速开始**：`docker compose up -d --build`，访问 http://localhost:8780（默认账号 `admin` / `password`）。登录后，管理员可在「账户管理」中创建其他账户。

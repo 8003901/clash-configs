@@ -1,7 +1,10 @@
-.PHONY: sync build test run migrate
+.PHONY: frontend-build sync build test run migrate
 
-# 同步前端构建产物到静态目录（供 go:embed）
-sync:
+# 先构建前端，再同步静态资源到 go:embed 目录
+frontend-build:
+	cd ../frontend && npm run build
+
+sync: frontend-build
 	rm -rf internal/web/static
 	mkdir -p internal/web/static
 	cp -r ../frontend/dist/* internal/web/static/

@@ -83,3 +83,20 @@ func TestRefreshTokenAndNotFound(t *testing.T) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestDeleteAndNotFound(t *testing.T) {
+	svc, _ := newMergeService(t)
+	m, err := svc.Create("to delete", []string{"c1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.Delete(m.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	if _, err := svc.Detail(m.ID); err != service.ErrNotFound {
+		t.Fatalf("expected ErrNotFound after delete, got %v", err)
+	}
+	if err := svc.Delete("nope"); err != service.ErrNotFound {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}

@@ -153,3 +153,126 @@ func TestCreateConfigEndpointValidation(t *testing.T) {
 		t.Fatalf("expected 400, got %d (%v)", resp.StatusCode, out)
 	}
 }
+
+func TestDeleteMergeEndpoint(t *testing.T) {
+	ts, s := newRouter(t)
+	defer ts.Close()
+	client := &http.Client{CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}}
+	resp, err := client.PostForm(ts.URL+"/login", url.Values{"username": {"admin"}, "password": {"password"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cookies := resp.Cookies()
+
+	m, err := service.NewMergeService(s, tmpl).Create("merge", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/clash_configs_merge/"+m.ID, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, cookie := range cookies {
+		req.AddCookie(cookie)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	req, err = http.NewRequest(http.MethodDelete, ts.URL+"/clash_configs_merge/"+m.ID, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, cookie := range cookies {
+		req.AddCookie(cookie)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected 404 after deleting merge, got %d", resp.StatusCode)
+	}
+}
+
+func TestAdminCanCreateUsersAndOthersCannot(t *testing.T) {
+	ts, _ := newRouter(t)
+	defer ts.Close()
+	client := &http.Client{CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}}
+	adminLogin, err := client.PostForm(ts.URL+"/login", url.Values{"username": {"admin"}, "password": {"password"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/users", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, cookie := range adminLogin.Cookies() {
+		req.AddCookie(cookie)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("admin list users: expected 200, got %d", resp.StatusCode)
+	}
+	var users []map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
+		t.Fatalf("decode users: %v", err)
+	}
+	resp.Body.Close()
+	encodedUsers, err := json.Marshal(users)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encodedUsers), "password") {
+		t.Fatalf("user list must not expose password hashes: %s", encodedUsers)
+	}
+
+	req, err = http.NewRequest(http.MethodPost, ts.URL+"/users", strings.NewReader(`{"username":"alice","password":"secure-pass"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	for _, cookie := range adminLogin.Cookies() {
+		req.AddCookie(cookie)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("admin create user: expected 201, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+
+	userLogin, err := client.PostForm(ts.URL+"/login", url.Values{"username": {"alice"}, "password": {"secure-pass"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err = http.NewRequest(http.MethodGet, ts.URL+"/users", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, cookie := range userLogin.Cookies() {
+		req.AddCookie(cookie)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("regular user list users: expected 403, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+}

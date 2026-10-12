@@ -27,10 +27,14 @@ func (h *Handler) Router() *gin.Engine {
 		api.GET("/clash_configs_merge", h.listMerges)
 		api.POST("/clash_configs_merge", h.createMerge)
 		api.GET("/clash_configs_merge/:id", h.detailMerge)
+		api.DELETE("/clash_configs_merge/:id", h.deleteMerge)
 		api.PUT("/clash_configs_merge/:id", h.updateMerge)
 		api.PUT("/clash_configs_merge/:id/token", h.refreshMergeToken)
 
 		api.PUT("/users/me/password", h.changePassword)
+		api.GET("/users/me", h.currentUser)
+		api.GET("/users", h.listUsers)
+		api.POST("/users", h.createUser)
 	}
 
 	return r

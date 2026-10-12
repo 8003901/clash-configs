@@ -90,6 +90,35 @@ func TestMergeAssociation(t *testing.T) {
 	}
 }
 
+func TestDeleteMergeClearsAssociationOnly(t *testing.T) {
+	s := newTestStore(t)
+	config := &model.ClashConfig{ID: "c1", Name: "a"}
+	if err := s.CreateClashConfig(config); err != nil {
+		t.Fatalf("create config: %v", err)
+	}
+	m := &model.ClashConfigsMerge{ID: "m1", Name: "merge", Configs: []model.ClashConfig{*config}}
+	if err := s.CreateMerge(m); err != nil {
+		t.Fatalf("create merge: %v", err)
+	}
+
+	if err := s.DeleteMerge(m.ID); err != nil {
+		t.Fatalf("delete merge: %v", err)
+	}
+	if _, err := s.FindMerge(m.ID); err != gorm.ErrRecordNotFound {
+		t.Fatalf("expected deleted merge, got err=%v", err)
+	}
+	if _, err := s.FindClashConfig(config.ID); err != nil {
+		t.Fatalf("merge deletion also removed config: %v", err)
+	}
+	var associations int64
+	if err := s.DB.Table("clash_configs_merge_config").Count(&associations).Error; err != nil {
+		t.Fatalf("count associations: %v", err)
+	}
+	if associations != 0 {
+		t.Fatalf("expected association to be cleared, got %d", associations)
+	}
+}
+
 func TestUserCRUD(t *testing.T) {
 	s := newTestStore(t)
 	u := &model.User{ID: "u1", Username: "admin", Password: "hash"}

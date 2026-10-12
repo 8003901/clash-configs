@@ -1,16 +1,27 @@
 <script setup lang="ts">
-import { Braces, Copy, ExternalLink, Pencil, Plus, RefreshCw } from '@lucide/vue'
+import { Braces, Copy, ExternalLink, Pencil, Plus, RefreshCw, Trash2 } from '@lucide/vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { listConfigs } from '@/api/config'
 import {
   createMerge,
+  deleteMerge,
   getMerge,
   listMerges,
   refreshMergeToken,
   updateMerge,
 } from '@/api/merge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -49,6 +60,9 @@ const saving = ref(false)
 const router = useRouter()
 
 const dialogOpen = ref(false)
+const deleteOpen = ref(false)
+const deleteTarget = ref<ClashConfigsMerge | null>(null)
+const deleting = ref(false)
 const form = reactive<FormState>({
   id: null,
   name: '',
@@ -152,6 +166,28 @@ async function refreshToken(merge: ClashConfigsMerge) {
   }
 }
 
+function askDelete(merge: ClashConfigsMerge) {
+  deleteTarget.value = merge
+  deleteOpen.value = true
+}
+
+async function confirmDelete() {
+  const id = deleteTarget.value?.id
+  if (!id) return
+  deleting.value = true
+  try {
+    await deleteMerge(id)
+    toast.success('已删除')
+    deleteOpen.value = false
+    deleteTarget.value = null
+    await load()
+  } catch {
+    toast.error('删除失败')
+  } finally {
+    deleting.value = false
+  }
+}
+
 async function copyText(text: string, message = '已复制') {
   try {
     await navigator.clipboard.writeText(text)
@@ -235,6 +271,9 @@ onMounted(load)
               <Button variant="ghost" size="icon-sm" title="编辑" @click="openEdit(merge)">
                 <Pencil class="size-4" />
               </Button>
+              <Button variant="ghost" size="icon-sm" title="删除" @click="askDelete(merge)">
+                <Trash2 class="size-4" />
+              </Button>
             </div>
           </TableCell>
         </TableRow>
@@ -292,5 +331,22 @@ onMounted(load)
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog v-model:open="deleteOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>确认删除</AlertDialogTitle>
+          <AlertDialogDescription>
+            确定要删除合并配置「{{ deleteTarget?.name }}」吗？此操作不可恢复。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel :disabled="deleting">取消</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" :disabled="deleting" @click="confirmDelete">
+            {{ deleting ? '删除中…' : '删除' }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
